@@ -214,7 +214,9 @@
   "ver.current": "Versión actualizada",
   "ver.update": "Hay una nueva versión {v}: toca para ver las novedades y cómo actualizar",
   "ver.unknown": "Aún no se pudo comprobar si hay una nueva versión",
-  "ver.off": "La comprobación de nuevas versiones está desactivada"
+  "ver.off": "La comprobación de nuevas versiones está desactivada",
+  "helper.updating": "Actualizando el asistente {from} → {v}…",
+  "helper.updateFailed": "Falló la actualización automática del asistente a {v}: {err}. Se reintentará en una hora, o reinstálalo con el botón de abajo."
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "falta {0}: copia helper.apk en la carpeta de datos",

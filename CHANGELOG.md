@@ -4,6 +4,11 @@ Projekt se od 0.9.0 jmenuje **Homemote for Google TV**, backend **homemote-backe
 
 Verze backendu je v `backend/app/version.py`. Zobrazuje se ve webu dole pod deskou a vrací ji `/api/health`.
 
+## 1.0.9 – 2026-11-14
+- **Aplikace v telefonu se aktualizuje z backendu** (aplikace 1.0.2). Backend v `/api/health` hlásí verzi aplikace, kterou má v image. Když je novější, aplikace ukáže nahoře lištu **Aktualizovat / Později** („Později“ připomene za 24 h). APK se stáhne z backendu a nainstaluje přes PackageInstaller; Android ukáže svůj potvrzovací dialog. Napoprvé je potřeba povolit Homemote „Instalovat neznámé aplikace“. Kontrola nejvýš jednou za hodinu.
+- **Pomocník na TV se aktualizuje automaticky**: po připojení pomocníka backend porovná jeho verzi s verzí v image a novější nainstaluje přes ověřené ADB. Stav je v okně Pomocník (aktualizuji / selhalo); po chybě další pokus za hodinu.
+- Aplikace 1.0.1 aktualizaci ještě neumí – na 1.0.2 je potřeba jednou aktualizovat ručně (QR v „Přidat telefon“ nebo odkaz v README).
+
 ## 1.0.8 – 2026-11-14
 - README přepsané jako návod krok za krokem se snímky obrazovky a přímými odkazy na stažení aplikace pro telefon a pomocníka (vždy nejnovější Release). Vývojářské informace jsou v `docs/development.md`.
 - Pole pro párovací kód je dost široké pro všech šest znaků (první znak se někdy nevešel).

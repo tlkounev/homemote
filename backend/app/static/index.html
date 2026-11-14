@@ -761,7 +761,8 @@ const I18N = {
     "set.removeNote": "Smaže párování, název a skryté aplikace. Zapnuté zařízení se pak znovu objeví mezi nalezenými (+).",
     "set.removeConfirm": "Odebrat zařízení „{name}“ z ovladače?", "set.removed": "Zařízení odebráno",
     "helper.title": "Pomocník na zařízení", "helper.intro": "Pomocník je malá aplikace na zařízení s Google TV. Díky němu uvidíte seznam aplikací, co právě běží, posuvník přehrávání a výběr vstupu a tlačítko nastavení otevře Nastavení Androidu. Instaluje se jednou přes ladění ADB, které pak můžete zase vypnout.",
-    "helper.running": "Pomocník běží", "helper.version": " (verze {v})", "helper.noListener": ". Chybí přístup k notifikacím, přeinstalujte.",
+    "helper.running": "Pomocník běží", "helper.version": " (verze {v})", "helper.updating": "Aktualizuji pomocníka {from} → {v}…",
+    "helper.updateFailed": "Automatická aktualizace pomocníka na {v} selhala: {err}. Další pokus za hodinu, nebo ho nainstalujte znovu tlačítkem níže.", "helper.noListener": ". Chybí přístup k notifikacím, přeinstalujte.",
     "helper.notConnected": "Pomocník není připojený", "helper.install": "Nainstalovat pomocníka", "helper.installing": "Instaluji… potvrďte případný dotaz na obrazovce",
     "helper.retry": "Zkusit se připojit", "helper.installed": "Pomocník je nainstalovaný", "helper.installedNoReply": "Nainstalováno, ale pomocník zatím neodpovídá",
     "helper.connected": "Pomocník připojen", "helper.noReply": "Pomocník neodpovídá",
@@ -846,7 +847,8 @@ const I18N = {
     "set.removeNote": "Deletes pairing, name and hidden apps. If the device is on, it shows up again among found devices (+).",
     "set.removeConfirm": "Remove the device “{name}” from the remote?", "set.removed": "Device removed",
     "helper.title": "Device helper", "helper.intro": "The helper is a small app on the Google TV device. It shows the app list, what's playing, the playback slider and input selection, and lets the settings button open Android Settings. It's installed once over ADB debugging, which you can turn off again afterwards.",
-    "helper.running": "The helper is running", "helper.version": " (version {v})", "helper.noListener": ". Notification access is missing, reinstall it.",
+    "helper.running": "The helper is running", "helper.version": " (version {v})", "helper.updating": "Updating the helper {from} → {v}…",
+    "helper.updateFailed": "Automatic helper update to {v} failed: {err}. It will retry in an hour, or reinstall it with the button below.", "helper.noListener": ". Notification access is missing, reinstall it.",
     "helper.notConnected": "The helper isn't connected", "helper.install": "Install the helper", "helper.installing": "Installing… confirm any prompt on the screen",
     "helper.retry": "Try to connect", "helper.installed": "The helper is installed", "helper.installedNoReply": "Installed, but the helper isn't responding yet",
     "helper.connected": "Helper connected", "helper.noReply": "The helper isn't responding",
@@ -1830,6 +1832,11 @@ function renderHelper() {
     ? `<span class="status-dot ok">${esc(t("helper.running") + (h.version ? t("helper.version", { v: h.version }) : "") + (h.listener_enabled === false ? t("helper.noListener") : ""))}</span>`
     : `<span class="status-dot bad">${esc(t("helper.notConnected") + (h.error ? ": " + h.error : ""))}</span>`;
   if (tv && !h.connected && !$("#adb-guide").dataset.touched) $("#adb-guide").open = true;
+  const u = h.update;
+  if (u?.state === "updating" || u?.state === "failed") {
+    $("#helper-status").innerHTML += `<p class="muted" style="margin:8px 0 0">${esc(u.state === "updating"
+      ? t("helper.updating", { from: u.from || "?", v: u.version }) : t("helper.updateFailed", { v: u.version, err: u.error || "" }))}</p>`;
+  }
   const a = S.android;
   if (a && (a.state === "building" || a.state === "installing-jdk" || a.state === "error") && !h.connected) {
     $("#helper-status").innerHTML += `<p class="muted" style="margin:8px 0 0">${esc(a.state === "error" ? t("android.error", { err: a.error || "" }) : t("android.building"))}</p>`;

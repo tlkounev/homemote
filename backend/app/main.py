@@ -46,6 +46,7 @@ async def run() -> None:
     rt = Runtime(store, auth, mgr, bus, port, ip, os.environ.get("HELPER_APK", os.path.join(apk_dir, "helper.apk")))
 
     rt.updates = UpdateChecker(publish=bus.publish)
+    mgr.helper_bundle = lambda: rt.android.bundle("helper") if rt.android else None
     rt.android = AndroidBuilder(data_dir, publish=bus.publish, prebuilt_dir=prebuilt or None)
     disc = Discovery(mgr, port, ip, rt.txt())
     mgr.discovery = disc

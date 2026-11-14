@@ -45,10 +45,10 @@ Router tak nemusí umět NAT loopback.
 
 | Metoda | Cesta | Tělo | Popis |
 |---|---|---|---|
-| GET | `/health` | | `{"ok":true,"instance_id":"…","version":"0.9.1"}`, bez přihlášení |
+| GET | `/health` | | `{"ok":true,"instance_id":"…","version":"1.0.9","phone_app":{"version":"1.0.2","code":3,"url":"/download/homemote.apk"}}`, bez přihlášení. `phone_app` jen když je APK v image; podle `code` aplikace v telefonu nabídne aktualizaci. |
 | GET | `/endpoints` | | `{"instance_id","local","public"}` |
 | GET | `/update` | | kontrola nové verze: `{"current","latest","update":bool,"url","checked","enabled","error"}` (poslední Release na GitHubu, kontrola každých 6 h) |
-| GET | `/android` | | stav sestavení APK: `{"state":"idle|ready|installing-jdk|building|error|unavailable","error","apps":{"helper":{"version","built","ready"},"phone":{…}}}` |
+| GET | `/android` | | stav sestavení APK: `{"state":"idle|ready|installing-jdk|building|error|unavailable","error","apps":{"helper":{"version","code","built","ready"},"phone":{…}}}` |
 | GET/PUT | `/settings` | `{"public_url","local_url"}` | prázdné `local_url` = automaticky `http://<IP>:<PORT>` |
 | GET | `/tvs` | | seznam TV (objekt `TV`) |
 | POST | `/tvs` | `{"host":"192.168.1.50"}` | ruční přidání, když mDNS nefunguje |
@@ -85,7 +85,7 @@ Router tak nemusí umět NAT loopback.
 {"id":"aa:bb:cc:dd:ee:ff","name":"Obývák","host":"192.168.1.50","paired":true,"adopted":true,"online":true,
  "is_on":true,"current_app":"com.netflix.ninja","volume":{"level":12,"max":60,"muted":false},
  "device_info":{"manufacturer":"Philips","model":"…","sw_version":"…"},
- "helper":{"connected":true,"version":"1.0","listener_enabled":true},
+ "helper":{"connected":true,"version":"1.0","listener_enabled":true,"update":null},
  "ime":{"active":false,"value":"","label":""},
  "adb":true,"text_modes":{"net.cme.voyo.cz.tvapp":"keys"}}
 ```
@@ -131,3 +131,5 @@ NotificationListenerService, ohlašuje se jako `_homemote-helper._tcp.local.`. K
 | POST | `/v1/settings/open` | spustí systémové nastavení (`android.settings.SETTINGS`) |
 
 Výběr session: první ve stavu PLAYING, jinak první z `getActiveSessions()`.
+
+`helper.update` (u TV): automatická aktualizace pomocníka na verzi z image – `null`, nebo `{"version","from","state":"updating|done|failed","error"}`. Spouští se po připojení pomocníka, když je u TV ověřené ADB (`adb_port`) a pomocník v image je novější; po chybě další pokus nejdřív za hodinu.

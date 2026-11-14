@@ -54,10 +54,18 @@ class AndroidBuilder:
 
     def status(self) -> dict[str, Any]:
         wanted, built = self._wanted(), self._built()
-        apps = {name: {"version": cfg["version_name"], "built": built.get(name),
+        apps = {name: {"version": cfg["version_name"], "code": cfg.get("version_code"), "built": built.get(name),
                        "ready": (self.data / cfg["apk"]).is_file()}
                 for name, cfg in wanted.items()}
         return {"state": self.state, "error": self.error, "apps": apps}
+
+    def bundle(self, name: str) -> tuple[str, str] | None:
+        """(verze, cesta k APK), když je APK hotové a aktuální – pro automatické aktualizace."""
+        cfg = self._wanted().get(name)
+        if not cfg or name in self._missing():
+            return None
+        path = self.data / cfg["apk"]
+        return (cfg["version_name"], str(path)) if path.is_file() else None
 
     def _set(self, state: str, error: str | None = None) -> None:
         self.state, self.error = state, error

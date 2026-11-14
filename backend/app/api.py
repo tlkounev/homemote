@@ -209,7 +209,13 @@ async def auth_password(request: web.Request) -> web.Response:
 # --- obecné ------------------------------------------------------------------------
 async def health(request: web.Request) -> web.Response:
     # Bez přihlášení: telefon tím ověřuje dosažitelnost a že jde o "jeho" backend.
-    return web.json_response({"ok": True, "instance_id": request.app[RT].store.instance_id, "version": VERSION})
+    rt = request.app[RT]
+    out: dict[str, Any] = {"ok": True, "instance_id": rt.store.instance_id, "version": VERSION}
+    # verze aplikace pro telefon v image – aplikace podle ní nabídne aktualizaci (stahuje z /download/homemote.apk)
+    phone = rt.android.status()["apps"].get("phone") if rt.android else None
+    if phone and phone.get("ready"):
+        out["phone_app"] = {"version": phone["version"], "code": phone.get("code"), "url": "/download/homemote.apk"}
+    return web.json_response(out)
 
 
 async def logs(request: web.Request) -> web.Response:

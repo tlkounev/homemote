@@ -168,6 +168,7 @@ class TV:
         self._pairing: AndroidTVRemote | None = None
         self.helper: HelperClient | None = None
         self.helper_info: dict[str, Any] | None = None
+        self.helper_update: dict[str, Any] = {}  # automatická aktualizace pomocníka (stav pro web)
         self._helper_failures = 0
         self._icons: dict[str, bytes] = {}
         self.nowplaying: dict[str, Any] | None = None
@@ -206,7 +207,8 @@ class TV:
             "current_app": r.current_app if r else None,
             "volume": dict(r.volume_info) if r and r.volume_info else None,
             "device_info": dict(r.device_info) if r and r.device_info else None,
-            "helper": {"connected": self.helper is not None, **(self.helper_info or {})},
+            "helper": {"connected": self.helper is not None, **(self.helper_info or {}),
+                       "update": {k: v for k, v in self.helper_update.items() if k != "at"} or None},
             "ime": self.ime,
             "adb": bool(self.rec.get("adb_port")),
             "text_modes": dict(self.rec.get("text_modes") or {}),
@@ -625,7 +627,47 @@ class TV:
             self._save()
         LOG.info("TV %s: helper připojen (%s:%s) %s", self.id, self.host, port, info)
         self.publish()
+        self._maybe_update_helper()
         return True
+
+    def _maybe_update_helper(self) -> None:
+        """Automatická aktualizace pomocníka na verzi z image backendu (přes ověřené ADB)."""
+        bundle = self.mgr.helper_bundle() if self.mgr.helper_bundle else None
+        running = (self.helper_info or {}).get("version")
+        port = self.rec.get("adb_port")
+        if not bundle or not running or not port or not self.host:
+            return
+        version, apk = bundle
+        if not _ver(version) or not _ver(running) or _ver(version) <= _ver(running):
+            if self.helper_update.get("state") == "updating":
+                return
+            if self.helper_update:
+                self.helper_update = {}
+                self.publish()
+            return
+        last = self.helper_update
+        if last.get("version") == version and (last.get("state") == "updating"
+                                               or time.monotonic() - last.get("at", 0) < 3600):
+            return  # běží, nebo nedávno selhala – další pokus nejdřív za hodinu
+        self.helper_update = {"version": version, "from": running, "state": "updating", "at": time.monotonic()}
+        self.publish()
+        asyncio.create_task(self._update_helper(version, apk, int(port)))
+
+    async def _update_helper(self, version: str, apk: str, port: int) -> None:
+        from . import adb  # pozdní import kvůli cyklu
+        LOG.info("TV %s: aktualizuji pomocníka %s → %s", self.id, self.helper_update.get("from"), version)
+        try:
+            for line in await adb.setup_helper(self.host or "", apk, connect_port=port):
+                LOG.info("TV %s: helper update: %s", self.id, line)
+            self.helper_update = {**self.helper_update, "state": "done", "at": time.monotonic()}
+            LOG.info("TV %s: pomocník aktualizován na %s", self.id, version)
+        except Exception as exc:  # noqa: BLE001 – zkusí se znovu za hodinu, ručně z okna Pomocník
+            err = str(exc) or exc.__class__.__name__
+            self.helper_update = {**self.helper_update, "state": "failed", "error": err, "at": time.monotonic()}
+            LOG.warning("TV %s: aktualizace pomocníka selhala: %s", self.id, err)
+        self.publish()
+        await asyncio.sleep(3)
+        await self.ensure_helper()
 
     def _h(self) -> HelperClient:
         if not self.helper:
@@ -736,6 +778,11 @@ class TV:
         return abs((new.get("position_ms") or 0) - expected) > 2000
 
 
+def _ver(v: Any) -> tuple[int, ...] | None:
+    m = re.fullmatch(r"v?(\d+(?:\.\d+)*)", str(v or "").strip())
+    return tuple(int(x) for x in m.group(1).split(".")) if m else None
+
+
 class Manager:
     def set_order(self, order: list[Any]) -> None:
         """Pořadí záložek zařízení (přetažením ve webu); zařízení mimo seznam jdou na konec."""
@@ -759,6 +806,7 @@ class Manager:
         self.tvs: dict[str, TV] = {}
         self.session: aiohttp.ClientSession | None = None
         self.discovery = None  # nastaví main
+        self.helper_bundle: Any = None  # () -> (verze, cesta k helper.apk) | None – nastaví main
         self._tasks: list[asyncio.Task] = []
         self._identify_lock = asyncio.Lock()
 

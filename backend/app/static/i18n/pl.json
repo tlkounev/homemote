@@ -214,7 +214,9 @@
   "ver.current": "Aktualna wersja",
   "ver.update": "Dostępna jest nowa wersja {v} – dotknij, aby zobaczyć nowości i sposób aktualizacji",
   "ver.unknown": "Nie udało się jeszcze sprawdzić nowej wersji",
-  "ver.off": "Sprawdzanie nowych wersji jest wyłączone"
+  "ver.off": "Sprawdzanie nowych wersji jest wyłączone",
+  "helper.updating": "Aktualizuję pomocnika {from} → {v}…",
+  "helper.updateFailed": "Automatyczna aktualizacja pomocnika do {v} nie powiodła się: {err}. Ponowna próba za godzinę albo zainstaluj go ponownie przyciskiem poniżej."
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "brak {0} – umieść helper.apk w folderze danych",

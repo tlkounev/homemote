@@ -28,8 +28,10 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,6 +54,14 @@ public class MainActivity extends Activity {
     private boolean pageReady;
     private boolean connecting;
     private ConnectivityManager.NetworkCallback netCb;
+    // aktualizace aplikace z backendu
+    private static WeakReference<MainActivity> current = new WeakReference<MainActivity>(null);
+    private Updater updater;
+    private LinearLayout updateBar;
+    private TextView updateText;
+    private Button updateNow, updateLater;
+    private Updater.Offer offer;
+    private boolean updating, waitingForPermission;
 
     private final Runnable reconnect = new Runnable() {
         @Override public void run() { connect(false); }
@@ -62,6 +72,8 @@ public class MainActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         store = new Store(this);
+        updater = new Updater(this);
+        current = new WeakReference<MainActivity>(this);
         if (handleDeepLink(getIntent())) return;
         if (!store.bound()) { openSetup(null); return; }
         buildUi();
@@ -80,6 +92,10 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (web != null) connect(false);  // mezitím se mohla změnit síť (Wi‑Fi doma / mobilní data)
+        if (waitingForPermission && offer != null) {
+            waitingForPermission = false;
+            if (Updater.canInstall(this)) startUpdate();
+        }
     }
 
     @Override
@@ -115,7 +131,12 @@ public class MainActivity extends Activity {
     }
 
     private void buildUi() {
+        LinearLayout outer = new LinearLayout(this);
+        outer.setOrientation(LinearLayout.VERTICAL);
+        outer.setBackgroundColor(Ui.background(this));
+        buildUpdateBar(outer);
         FrameLayout root = new FrameLayout(this);
+        outer.addView(root, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         root.setBackgroundColor(Ui.background(this));
         getWindow().getDecorView().setBackgroundColor(Ui.background(this));
 
@@ -140,6 +161,7 @@ public class MainActivity extends Activity {
                 if (base != null && url.startsWith(base)) {
                     pageReady = true;
                     hideOverlay();
+                    checkUpdate(base);
                 }
             }
 
@@ -203,8 +225,8 @@ public class MainActivity extends Activity {
         overlay.addView(buttons);
         root.addView(overlay, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        Ui.applyInsets(root);
-        setContentView(root);
+        Ui.applyInsets(outer);
+        setContentView(outer);
         showOverlay(Texts.get(3), false);
     }
 
@@ -276,6 +298,116 @@ public class MainActivity extends Activity {
                 });
             }
         });
+    }
+
+    // --- aktualizace aplikace ----------------------------------------------------------------
+    private void buildUpdateBar(LinearLayout parent) {
+        updateBar = new LinearLayout(this);
+        updateBar.setOrientation(LinearLayout.HORIZONTAL);
+        updateBar.setGravity(Gravity.CENTER_VERTICAL);
+        updateBar.setBackgroundColor(0xFF5B4BE0);
+        updateBar.setPadding(dp(14), dp(6), dp(6), dp(6));
+        updateText = new TextView(this);
+        updateText.setTextColor(0xFFFFFFFF);
+        updateText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        updateBar.addView(updateText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        updateLater = smallButton(Texts.get(6));
+        updateLater.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { if (offer != null) updater.snooze(offer); updateBar.setVisibility(View.GONE); }
+        });
+        updateBar.addView(updateLater);
+        updateNow = smallButton(Texts.get(5));
+        updateNow.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { startUpdate(); }
+        });
+        updateBar.addView(updateNow);
+        updateBar.setVisibility(View.GONE);
+        parent.addView(updateBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private Button smallButton(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setAllCaps(false);
+        b.setTextColor(0xFFFFFFFF);
+        b.setBackgroundColor(0x00000000);
+        b.setMinWidth(0);
+        b.setMinimumWidth(0);
+        b.setPadding(dp(12), 0, dp(12), 0);
+        return b;
+    }
+
+    /** Po načtení webu: má backend novější verzi aplikace? (nejvýš jednou za hodinu) */
+    private void checkUpdate(final String b) {
+        if (updating || !updater.dueForCheck()) return;
+        bg.execute(new Runnable() {
+            @Override public void run() {
+                final Updater.Offer o = updater.check(b);
+                ui.post(new Runnable() {
+                    @Override public void run() {
+                        if (o == null || isFinishing() || updating) return;
+                        offer = o;
+                        updateText.setText(Texts.get(4).replace("{v}", o.version));
+                        updateNow.setEnabled(true);
+                        updateNow.setVisibility(View.VISIBLE);
+                        updateLater.setVisibility(View.VISIBLE);
+                        updateBar.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        });
+    }
+
+    private void startUpdate() {
+        if (offer == null || updating) return;
+        if (!Updater.canInstall(this)) {
+            waitingForPermission = true;
+            Toast.makeText(this, Texts.get(10), Toast.LENGTH_LONG).show();
+            Updater.openInstallPermission(this);
+            return;
+        }
+        updating = true;
+        updateNow.setVisibility(View.GONE);
+        updateLater.setVisibility(View.GONE);
+        updateText.setText(Texts.get(7).replace("{p}", "0"));
+        final Updater.Offer o = offer;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    Updater.downloadAndInstall(MainActivity.this, o, new Updater.Progress() {
+                        @Override public void update(final int pct) {
+                            ui.post(new Runnable() {
+                                @Override public void run() {
+                                    updateText.setText(pct >= 0 ? Texts.get(7).replace("{p}", String.valueOf(pct)) : Texts.get(8));
+                                }
+                            });
+                        }
+                    });
+                    ui.post(new Runnable() { @Override public void run() { updateText.setText(Texts.get(8)); } });
+                } catch (final Exception e) {
+                    ui.post(new Runnable() {
+                        @Override public void run() {
+                            Toast.makeText(MainActivity.this, Texts.get(9) + e.getMessage(), Toast.LENGTH_LONG).show();
+                            resetUpdateBar();
+                        }
+                    });
+                }
+            }
+        }).start();
+    }
+
+    private void resetUpdateBar() {
+        updating = false;
+        if (offer == null) { updateBar.setVisibility(View.GONE); return; }
+        updateText.setText(Texts.get(4).replace("{v}", offer.version));
+        updateNow.setVisibility(View.VISIBLE);
+        updateLater.setVisibility(View.VISIBLE);
+    }
+
+    /** Instalace skončila jinak než úspěchem (zrušeno / chyba) – lišta zpět do výchozího stavu. */
+    static void updateFinished() {
+        final MainActivity a = current.get();
+        if (a != null) a.ui.post(new Runnable() { @Override public void run() { if (a.updateBar != null) a.resetUpdateBar(); } });
     }
 
     private void load(String b) {
