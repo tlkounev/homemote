@@ -47,6 +47,7 @@ Router tak nemusí umět NAT loopback.
 |---|---|---|---|
 | GET | `/health` | | `{"ok":true,"instance_id":"…","version":"0.9.1"}`, bez přihlášení |
 | GET | `/endpoints` | | `{"instance_id","local","public"}` |
+| GET | `/update` | | kontrola nové verze: `{"current","latest","update":bool,"url","checked","enabled","error"}` (poslední Release na GitHubu, kontrola každých 6 h) |
 | GET | `/android` | | stav sestavení APK: `{"state":"idle|ready|installing-jdk|building|error|unavailable","error","apps":{"helper":{"version","built","ready"},"phone":{…}}}` |
 | GET/PUT | `/settings` | `{"public_url","local_url"}` | prázdné `local_url` = automaticky `http://<IP>:<PORT>` |
 | GET | `/tvs` | | seznam TV (objekt `TV`) |
@@ -99,8 +100,9 @@ Router tak nemusí umět NAT loopback.
 
 **WebSocket `/api/ws`:**
 - Server → klient:
-  - `snapshot` (`tvs`, `endpoints`, `android`) po připojení,
+  - `snapshot` (`tvs`, `endpoints`, `android`, `update`) po připojení,
   - `android` (`android` = stav jako `GET /api/android`) při změně stavu sestavení APK,
+  - `update` (`update` = stav jako `GET /api/update`) při zjištění nové verze,
   - `tv` (`tv`) při změně,
   - `tv_removed` (`id`),
   - `endpoints` (`endpoints`),

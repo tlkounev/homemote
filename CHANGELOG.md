@@ -4,6 +4,10 @@ Projekt se od 0.9.0 jmenuje **Homemote for Google TV**, backend **homemote-backe
 
 Verze backendu je v `backend/app/version.py`. Zobrazuje se ve webu dole pod deskou a vrací ji `/api/health`.
 
+## 1.0.7 – 2026-11-14
+- Verze backendu je v záhlaví vedle názvu (dřív v patičce): **zelená** = aktuální, **červená** = na GitHubu je novější verze (odkaz na její Release), šedá = zatím neověřeno.
+- Backend každých 6 hodin anonymně zjistí poslední Release na GitHubu (`GET /api/update`, WS událost `update`). Vypnutí: `HM_UPDATE_CHECK=0`; fork: `HM_UPDATE_REPO=vlastník/název`.
+
 ## 1.0.6 – 2026-11-14
 - **Projekt je na GitHubu** (`tlkounev/homemote`, Apache-2.0). GitHub Actions při každé změně backendu sestaví APK pomocníka i aplikace pro telefon a Docker image `ghcr.io/tlkounev/homemote-backend` s nimi uvnitř. Nová verze vytvoří Release s oběma APK.
 - Image obsahuje hotová APK (`/opt/homemote/apk`), při startu se nic nesestavuje a image už neobsahuje JDK. Image sestavený ze zdrojáků bez APK si je dál sestaví sám.

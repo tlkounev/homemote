@@ -210,7 +210,11 @@
   "android.error": "Compilazione delle app Android non riuscita: {err}",
   "tv.reorder": "trascina per riordinare",
   "scr.wake": "Prova a riattivare",
-  "wake.sent": "Wake-on-LAN inviato. Se il dispositivo non si accende, abilita l’accensione tramite Wi-Fi (Philips: Impostazioni → Rete e Internet → WoWLAN)."
+  "wake.sent": "Wake-on-LAN inviato. Se il dispositivo non si accende, abilita l’accensione tramite Wi-Fi (Philips: Impostazioni → Rete e Internet → WoWLAN).",
+  "ver.current": "Versione aggiornata",
+  "ver.update": "È disponibile la nuova versione {v} – tocca per le novità e come aggiornare",
+  "ver.unknown": "Non è ancora stato possibile verificare una nuova versione",
+  "ver.off": "Il controllo delle nuove versioni è disattivato"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "manca {0} – metti helper.apk nella cartella dei dati",

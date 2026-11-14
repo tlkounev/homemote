@@ -22,6 +22,7 @@ class Runtime:
         self.helper_apk = helper_apk
         self.phone_apk = os.path.join(os.path.dirname(helper_apk) or ".", "homemote.apk")
         self.android: Any = None  # AndroidBuilder (nastaví main)
+        self.updates: Any = None  # UpdateChecker (nastaví main)
         self.discovery = None
         self.store.data.setdefault("settings", {})
 

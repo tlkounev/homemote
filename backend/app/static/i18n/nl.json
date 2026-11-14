@@ -210,7 +210,11 @@
   "android.error": "Bouwen van de Android-apps mislukt: {err}",
   "tv.reorder": "sleep om de volgorde te wijzigen",
   "scr.wake": "Proberen te wekken",
-  "wake.sent": "Wake-on-LAN verzonden. Gaat het apparaat niet aan, schakel dan inschakelen via wifi in (Philips: Instellingen → Netwerk en internet → WoWLAN)."
+  "wake.sent": "Wake-on-LAN verzonden. Gaat het apparaat niet aan, schakel dan inschakelen via wifi in (Philips: Instellingen → Netwerk en internet → WoWLAN).",
+  "ver.current": "Actuele versie",
+  "ver.update": "Nieuwe versie {v} beschikbaar – tik voor nieuws en hoe je bijwerkt",
+  "ver.unknown": "Kon nog niet controleren op een nieuwe versie",
+  "ver.off": "Controleren op nieuwe versies staat uit"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "{0} ontbreekt – zet helper.apk in de datamap",

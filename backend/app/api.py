@@ -159,6 +159,11 @@ async def auth_pair(request: web.Request) -> web.Response:
     return web.json_response({"code": code, "uri": uri, "svg": buf.getvalue().decode(), "expires_in": 300, "app": app})
 
 
+async def update_status(request: web.Request) -> web.Response:
+    rt = request.app[RT]
+    return web.json_response(rt.updates.status() if rt.updates else {"current": VERSION, "enabled": False})
+
+
 async def android_status(request: web.Request) -> web.Response:
     rt = request.app[RT]
     return web.json_response(rt.android.status() if rt.android else {"state": "unavailable", "apps": {}})
@@ -414,7 +419,8 @@ async def ws(request: web.Request) -> web.WebSocketResponse:
     sock = web.WebSocketResponse(heartbeat=20)
     await sock.prepare(request)
     await sock.send_json({"type": "snapshot", "endpoints": rt.endpoints(), "tvs": [tv.snapshot() for tv in mgr.tvs.values()],
-                          "android": rt.android.status() if rt.android else None})
+                          "android": rt.android.status() if rt.android else None,
+                          "update": rt.updates.status() if rt.updates else None})
     for tv in mgr.tvs.values():
         if tv.nowplaying:
             await sock.send_json({"type": "nowplaying", "tv_id": tv.id, "data": tv.nowplaying})
@@ -455,6 +461,7 @@ def build_app(rt: Runtime) -> web.Application:
             web.get("/", index),
             web.get("/download/homemote.apk", download_phone_apk),
             web.get("/api/android", android_status),
+            web.get("/api/update", update_status),
             web.static("/icons", STATIC_DIR / "icons"),
             web.static("/i18n", STATIC_DIR / "i18n"),
             web.get("/api/health", health),

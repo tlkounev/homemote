@@ -9,6 +9,7 @@ import signal
 from aiohttp import web
 
 from .android_build import AndroidBuilder
+from .updates import UpdateChecker
 from .api import build_app
 from .auth import Auth
 from .bus import Bus
@@ -44,6 +45,7 @@ async def run() -> None:
     apk_dir = prebuilt or data_dir
     rt = Runtime(store, auth, mgr, bus, port, ip, os.environ.get("HELPER_APK", os.path.join(apk_dir, "helper.apk")))
 
+    rt.updates = UpdateChecker(publish=bus.publish)
     rt.android = AndroidBuilder(data_dir, publish=bus.publish, prebuilt_dir=prebuilt or None)
     disc = Discovery(mgr, port, ip, rt.txt())
     mgr.discovery = disc
@@ -54,6 +56,7 @@ async def run() -> None:
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", port).start()
     log.info("Web a API běží na http://%s:%s/", ip, port)
+    rt.updates.start()  # kontrola nové verze na GitHubu (každých 6 h)
     rt.android.start()  # hotová APK z image, jinak se chybějící / zastaralá sestaví na pozadí
     if not auth.configured:
         log.info("Heslo zatím není nastavené – otevřete web z domácí sítě a nastavte ho.")
@@ -64,6 +67,7 @@ async def run() -> None:
         loop.add_signal_handler(sig, stop.set)
     await stop.wait()
 
+    await rt.updates.stop()
     await runner.cleanup()
     await disc.stop()
     await mgr.stop()

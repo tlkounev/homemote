@@ -210,7 +210,11 @@
   "android.error": "Android アプリのビルドに失敗しました：{err}",
   "tv.reorder": "ドラッグして並べ替え",
   "scr.wake": "起動を試す",
-  "wake.sent": "Wake-on-LAN を送信しました。デバイスが起動しない場合は、Wi-Fi による電源オンを有効にしてください（Philips：設定 → ネットワークとインターネット → WoWLAN）。"
+  "wake.sent": "Wake-on-LAN を送信しました。デバイスが起動しない場合は、Wi-Fi による電源オンを有効にしてください（Philips：設定 → ネットワークとインターネット → WoWLAN）。",
+  "ver.current": "最新バージョンです",
+  "ver.update": "新しいバージョン {v} があります – タップして変更点と更新方法を表示",
+  "ver.unknown": "新しいバージョンをまだ確認できていません",
+  "ver.off": "新しいバージョンの確認はオフです"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "{0} がありません – helper.apk をデータフォルダーに置いてください",

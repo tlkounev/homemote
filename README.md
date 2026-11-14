@@ -64,6 +64,8 @@ With `macvlan` the Docker host itself cannot reach the container unless you add 
 
 Forgotten password: stop the container, delete `data/auth.json`, start it again.
 
+The version next to the title turns red when a newer release exists on GitHub (checked anonymously every 6 hours; disable with `HM_UPDATE_CHECK=0`).
+
 ## Releases
 
 Every change to `backend/` on `main` builds the APKs and the Docker image in GitHub Actions ([`release.yml`](.github/workflows/release.yml)). A new version in [`backend/app/version.py`](backend/app/version.py) also creates a GitHub Release with both APKs. Changes are listed in [`CHANGELOG.md`](CHANGELOG.md); the HTTP/WebSocket API is documented in [`API.md`](API.md).

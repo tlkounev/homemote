@@ -210,7 +210,11 @@
   "android.error": "Android 앱 빌드 실패: {err}",
   "tv.reorder": "드래그하여 순서 변경",
   "scr.wake": "깨우기 시도",
-  "wake.sent": "Wake-on-LAN을 보냈습니다. 기기가 켜지지 않으면 Wi-Fi로 켜기를 활성화하세요(Philips: 설정 → 네트워크 및 인터넷 → WoWLAN)."
+  "wake.sent": "Wake-on-LAN을 보냈습니다. 기기가 켜지지 않으면 Wi-Fi로 켜기를 활성화하세요(Philips: 설정 → 네트워크 및 인터넷 → WoWLAN).",
+  "ver.current": "최신 버전",
+  "ver.update": "새 버전 {v}이(가) 있습니다 – 탭하여 새로운 내용과 업데이트 방법 보기",
+  "ver.unknown": "아직 새 버전을 확인하지 못했습니다",
+  "ver.off": "새 버전 확인이 꺼져 있습니다"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "{0}이(가) 없습니다 – helper.apk를 데이터 폴더에 넣으세요",

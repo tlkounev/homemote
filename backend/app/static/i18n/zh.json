@@ -210,7 +210,11 @@
   "android.error": "构建 Android 应用失败：{err}",
   "tv.reorder": "拖动以调整顺序",
   "scr.wake": "尝试唤醒",
-  "wake.sent": "已发送网络唤醒（Wake-on-LAN）。如果设备没有开机，请在设备上启用通过 Wi-Fi 开机（Philips：设置 → 网络和互联网 → WoWLAN）。"
+  "wake.sent": "已发送网络唤醒（Wake-on-LAN）。如果设备没有开机，请在设备上启用通过 Wi-Fi 开机（Philips：设置 → 网络和互联网 → WoWLAN）。",
+  "ver.current": "已是最新版本",
+  "ver.update": "有新版本 {v} – 点按查看更新内容和升级方法",
+  "ver.unknown": "暂时无法检查新版本",
+  "ver.off": "新版本检查已关闭"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "缺少 {0} – 请将 helper.apk 放入数据文件夹",

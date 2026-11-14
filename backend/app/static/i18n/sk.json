@@ -210,7 +210,11 @@
   "android.error": "Zostavenie aplikácií pre Android zlyhalo: {err}",
   "tv.reorder": "presunutím zmeníte poradie",
   "scr.wake": "Skúsiť zobudiť",
-  "wake.sent": "Odoslané zobudenie (Wake-on-LAN). Ak sa zariadenie nezapne, povoľte na ňom zapnutie cez Wi-Fi (Philips: Nastavenia → Sieť a internet → WoWLAN)."
+  "wake.sent": "Odoslané zobudenie (Wake-on-LAN). Ak sa zariadenie nezapne, povoľte na ňom zapnutie cez Wi-Fi (Philips: Nastavenia → Sieť a internet → WoWLAN).",
+  "ver.current": "Aktuálna verzia",
+  "ver.update": "Je dostupná nová verzia {v} – ťuknutím zobrazíte novinky a postup aktualizácie",
+  "ver.unknown": "Novú verziu sa zatiaľ nepodarilo overiť",
+  "ver.off": "Kontrola novej verzie je vypnutá"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "chýba {0} – nahrajte helper.apk do priečinka s dátami",

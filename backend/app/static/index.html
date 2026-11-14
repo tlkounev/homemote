@@ -72,6 +72,12 @@ header.top h1 .brand-text { display: flex; align-items: baseline; gap: 8px; min-
   .lang-btn > span { display: none; }
   header.top { gap: 8px; } .top-right { gap: 8px !important; }
 }
+.ver { font-family: var(--body, inherit); font-size: .72rem; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .01em;
+  color: var(--muted); border: 1px solid currentColor; border-radius: 999px; padding: 1px 7px; white-space: nowrap; align-self: center;
+  text-decoration: none; background: none; line-height: 1.5; cursor: default; }
+.ver.ok { color: var(--good); }
+.ver.new { color: var(--bad); cursor: pointer; }
+.ver.new:hover { background: color-mix(in srgb, var(--bad) 14%, transparent); }
 header.top h1 small { font-family: var(--body, inherit); font-size: .78rem; font-weight: 400; color: var(--muted); white-space: nowrap; }
 header.top h1 img { border-radius: 7px; box-shadow: 0 4px 14px rgba(91, 75, 245, .35); }
 .top-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
@@ -123,7 +129,6 @@ header.top h1 img { border-radius: 7px; box-shadow: 0 4px 14px rgba(91, 75, 245,
 .tab[aria-selected=true] { cursor: text; }
 .tab-rename { display: inline-flex; align-items: center; gap: 10px; }
 .tab-rename input { font: inherit; color: inherit; width: 14ch; min-width: 6ch; background: var(--key); border: 1px solid var(--key-line); border-radius: 8px; padding: 0 8px; }
-.foot { text-align: center; color: var(--muted); font-size: .8rem; padding: 22px 0 0; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .slab-head { gap: 10px; } }
 .rename-form { display: flex; gap: 8px; align-items: center; }
 .rename-form input {
@@ -435,7 +440,7 @@ details.guide .note { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
 <div id="app" class="wrap hidden">
   <div class="ambient" aria-hidden="true"></div>
   <header class="top">
-    <h1 id="brand"><img src="/icons/icon.svg" alt="" width="28" height="28"><span class="brand-text"><span>Homemote</span><small>for Google TV</small></span></h1>
+    <h1 id="brand"><img src="/icons/icon.svg" alt="" width="28" height="28"><span class="brand-text"><span>Homemote</span><small>for Google TV</small></span><a id="ver" class="ver hidden" target="_blank" rel="noopener"></a></h1>
     <div class="top-right">
       <div class="langs" data-langs></div>
       <span id="offline" class="offline-pill hidden" data-i18n="live.off"></span>
@@ -541,7 +546,6 @@ details.guide .note { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
     </section>
   </div>
   </main>
-  <footer class="foot"><span data-i18n="app.name"></span> <span id="ver"></span></footer>
 </div>
 
 <!-- nastavení -->
@@ -782,6 +786,8 @@ const I18N = {
     "diag.copyFailed": "Kopírování prohlížeč nepovolil – označte text ručně",
     "pw.title": "Změna hesla", "pw.old": "Současné heslo", "pw.new": "Nové heslo", "pw.btn": "Změnit heslo", "pw.done": "Heslo změněno",
     "about": "Homemote, verze backendu {v}",
+    "ver.current": "Aktuální verze", "ver.update": "Je dostupná nová verze {v} – klepnutím zobrazíte novinky a postup aktualizace",
+    "ver.unknown": "Novou verzi se zatím nepodařilo ověřit", "ver.off": "Kontrola nové verze je vypnutá",
     "add.found": "Nalezená zařízení",
     "add.none": "V síti zatím není žádné nové zařízení. Zařízení musí být zapnuté a ve stejné síti.",
     "add.byIp": "Zadat IP adresu",
@@ -865,6 +871,8 @@ const I18N = {
     "diag.copyFailed": "The browser blocked copying – select the text manually",
     "pw.title": "Change password", "pw.old": "Current password", "pw.new": "New password", "pw.btn": "Change password", "pw.done": "Password changed",
     "about": "Homemote, backend version {v}",
+    "ver.current": "Up to date", "ver.update": "New version {v} is available – tap to see what's new and how to update",
+    "ver.unknown": "Couldn't check for a new version yet", "ver.off": "Checking for new versions is turned off",
     "add.found": "Found devices",
     "add.none": "No new device on the network yet. It has to be on and in the same network.",
     "add.byIp": "Enter an IP address",
@@ -931,6 +939,7 @@ function applyI18n() {
   $("#edit-apps").textContent = S.editApps ? t("apps.done") : t("apps.edit");
   if (!$("#log-box").textContent || $("#log-box").dataset.hint) { $("#log-box").textContent = t("diag.hint"); $("#log-box").dataset.hint = "1"; }
   $("#about").textContent = t("about", { v: S.version || "?" });
+  renderVersion();
 }
 const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 const flag = (c) => FLAGS[c].replace("<svg ", '<svg class="flag" ');
@@ -1011,7 +1020,7 @@ function deviceName() {
   return `${b}${os ? " · " + os : ""}`;
 }
 async function loadVersion() {
-  try { const h = await (await fetch("/api/health")).json(); S.version = h.version; $("#ver").textContent = h.version || ""; } catch {}
+  try { const h = await (await fetch("/api/health")).json(); S.version = h.version; renderVersion(); } catch {}
   $("#about").textContent = t("about", { v: S.version || "?" });
 }
 
@@ -1067,7 +1076,9 @@ function connectWS() {
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
     if (m.type === "snapshot") {
-      S.tvs.clear(); m.tvs.forEach(x => S.tvs.set(x.id, x)); S.endpoints = m.endpoints; S.android = m.android || null; render();
+      S.tvs.clear(); m.tvs.forEach(x => S.tvs.set(x.id, x)); S.endpoints = m.endpoints; S.android = m.android || null; S.update = m.update || null; renderVersion(); render();
+    } else if (m.type === "update") {
+      S.update = m.update; renderVersion();
     } else if (m.type === "android") {
       S.android = m.android; if ($("#helper-dlg").open) renderHelper();
       if (m.android?.state === "ready" && $("#qr .android-wait")) $("#add-phone").click();  // aplikace hotová → ukázat i QR ke stažení
@@ -1649,6 +1660,22 @@ function sendKey(key, direction = "SHORT") {
     .then(r => { if (key === "settings" && r?.via === "remote") toast(t("settings.viaKey")); if (key === "power" && r?.via === "wol") toast(t("wake.sent")); })
     .catch(e => toast(e.message));
   if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
+}
+/* verze vedle názvu: zelená = aktuální, červená = na GitHubu je novější (odkaz na Release) */
+function renderVersion() {
+  const el = $("#ver"), u = S.update, v = u?.current || S.version;
+  if (!el || !v) return;
+  el.classList.remove("hidden", "ok", "new");
+  el.textContent = "v" + v;
+  if (u?.update) {
+    el.classList.add("new"); el.href = u.url || "https://github.com/tlkounev/homemote/releases";
+    el.title = t("ver.update", { v: u.latest });
+  } else {
+    el.removeAttribute("href");
+    if (u?.latest) { el.classList.add("ok"); el.title = t("ver.current"); }
+    else el.title = u && u.enabled === false ? t("ver.off") : t("ver.unknown");
+  }
+  el.setAttribute("aria-label", el.title);
 }
 function sendText(text) {
   if (!cur() || text == null) return;
