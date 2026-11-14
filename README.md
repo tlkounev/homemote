@@ -1,6 +1,6 @@
 # Homemote for Google TV
 
-A self-hosted universal remote for Google TV / Android TV devices. A small backend runs in Docker on your home server (e.g. a QNAP NAS), finds the TVs on your network and serves a web remote plus an Android phone app.
+A self-hosted universal remote for Google TV / Android TV devices. A small backend runs in Docker on your home server, finds the TVs on your network and serves a web remote plus an Android phone app.
 
 - **Remote control** over the Android TV Remote protocol v2 (the same one the official Google TV app uses): D-pad, volume, channels, long-press OK, power, typing text (also into apps with their own on-screen keyboard, via ADB).
 - **Optional helper app on the TV** adds the app list with icons, now playing with a seek bar, input selection and opening TV settings.
@@ -9,25 +9,51 @@ A self-hosted universal remote for Google TV / Android TV devices. A small backe
 
 ## Install
 
-The image `ghcr.io/tlkounev/homemote-backend` contains everything, including the ready-built helper and phone APKs. It is `linux/amd64` (e.g. Intel/AMD QNAP models).
+Any x86-64 Linux host with Docker (home server, mini PC, NAS with Docker support). The image `ghcr.io/tlkounev/homemote-backend` contains everything, including the ready-built helper and phone APKs. It is built for `linux/amd64`.
 
-### QNAP Container Station
+### Docker Compose
 
-1. Create the folder `/Container/homemote/data` (File Station).
-2. Container Station → **Applications → Create**, paste [`deploy/container-station.yml`](deploy/container-station.yml), create.
-3. Open `http://<NAS IP>:888/` from your home network and set a password.
-
-Update: Applications → homemote → **Recreate** (pulls the latest image).
-
-### Any Linux with Docker
+Copy [`docker-compose.yml`](docker-compose.yml) into an empty folder and run:
 
 ```sh
-cd backend
-docker compose up -d                       # first start
+docker compose up -d                          # first start
 docker compose pull && docker compose up -d   # update
 ```
 
-`network_mode: host` is required for automatic TV discovery (mDNS). Docker Desktop on Windows/macOS does not pass multicast into the LAN; add TVs by IP there. Giving the container its own LAN IP (QNAP `qnet`, Linux `macvlan`) is described in [`backend/README.md`](backend/README.md).
+### docker run
+
+```sh
+docker run -d --name homemote-backend --restart unless-stopped \
+  --network host -v "$PWD/data:/data" -e PORT=888 \
+  ghcr.io/tlkounev/homemote-backend:latest
+```
+
+Then open `http://<host IP>:888/` **from your home network** and set a password. All state lives in the `data` folder (mounted at `/data`).
+
+### Network
+
+`network_mode: host` is required for automatic TV discovery (mDNS): the container has to be directly in the home LAN, and Docker's default NAT network does not pass multicast. Docker Desktop on Windows/macOS does not pass multicast into the LAN either; add TVs by IP there (the **+** button).
+
+To give the container its own IP in the LAN instead, use a `macvlan` network:
+
+```yaml
+services:
+  homemote-backend:
+    # … as in docker-compose.yml, without network_mode
+    networks:
+      lan:
+        ipv4_address: 192.168.1.20      # outside the DHCP pool
+networks:
+  lan:
+    driver: macvlan
+    driver_opts: { parent: eth0 }        # host interface in the LAN (ip -br a)
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
+          gateway: 192.168.1.1
+```
+
+With `macvlan` the Docker host itself cannot reach the container unless you add a macvlan interface on the host too; other devices in the LAN can.
 
 ## First steps
 
@@ -56,8 +82,8 @@ Repository → Settings → Secrets and variables → Actions → *New repositor
 ## Build from source
 
 ```sh
-cd backend
-docker compose build && docker compose up -d
+docker build -t ghcr.io/tlkounev/homemote-backend:latest backend
+docker compose up -d
 ```
 
 Without prebuilt APKs in the image the backend builds them itself at first start (installs a JDK, downloads the build tools, keeps keystores in `data/keys/`). No Gradle or Android SDK is used, see [`backend/android/README.md`](backend/android/README.md).
@@ -70,7 +96,7 @@ Without prebuilt APKs in the image the backend builds them itself at first start
 | `backend/android/helper/` | helper app for the TV |
 | `backend/android/phone/` | phone app (WebView wrapper with QR pairing) |
 | `backend/android/build.py` | APK build without Gradle |
-| `deploy/` | Container Station configuration |
+| `docker-compose.yml` | ready-to-use Compose file |
 
 ## License
 

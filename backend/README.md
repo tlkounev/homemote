@@ -9,49 +9,26 @@ Homemote je ovladač pro zařízení s Google TV / Android TV. Backend běží v
 
 ## Spuštění
 
+Libovolný Linux s Dockerem. Hotový image `ghcr.io/tlkounev/homemote-backend` obsahuje vše včetně APK. Stačí `docker-compose.yml` z kořene repozitáře:
+
 ```sh
 docker compose up -d                          # první spuštění
 docker compose pull && docker compose up -d   # aktualizace
 ```
 
-Pak otevřete `http://<IP počítače>:888/` **z domácí sítě** a nastavte heslo. Port změníte proměnnou `PORT` v `docker-compose.yml`.
+Pak otevřete `http://<IP počítače>:888/` **z domácí sítě** a nastavte heslo. Port změníte proměnnou `PORT`. Veškerý stav je ve složce připojené jako `/data`.
 
 ### Síť
 
 Výchozí je `network_mode: host`. Automatické hledání televizí (mDNS) potřebuje, aby kontejner byl přímo v domácí síti. Výchozí NAT síť Dockeru multicast nepropustí.
 
-Volitelně může kontejner dostat vlastní IP v LAN:
-
-- **QNAP:** síť `qnet` (v Container Station „Bridge“). Ne `macvlan`, protože s ním se NAS sám ke kontejneru nedostane.
-  ```yaml
-  services:
-    homemote-backend:
-      networks:
-        lan:
-          ipv4_address: 192.168.1.20   # mimo DHCP pool
-  networks:
-    lan:
-      driver: qnet
-      driver_opts: { iface: eth0 }     # rozhraní NASu v LAN (ip -br a)
-      ipam:
-        driver: qnet
-        options: { iface: eth0 }
-        config:
-          - subnet: 192.168.1.0/24
-            gateway: 192.168.1.1
-  ```
-  `network_mode: host` pak smažte.
-- **Ostatní Linux:** obdobně `macvlan`. Hostitel se ale ke kontejneru nedostane, pokud nepřidáte macvlan rozhraní i na hostiteli.
+Volitelně může kontejner dostat vlastní IP v LAN přes síť `macvlan` (příklad v `../README.md`). Hostitel se pak ke kontejneru nedostane, pokud na něm nepřidáte také macvlan rozhraní.
 
 Docker Desktop (Windows, macOS) neposílá multicast do domácí sítě. Zařízení se tam přidávají ručně podle IP (tlačítko + v záhlaví).
 
-### QNAP Container Station
-
-Vytvořte prázdnou složku `/Container/homemote/data`. V Container Station → Applications → Create vložte `../deploy/container-station.yml`. Aktualizace: Applications → homemote → Recreate (stáhne nejnovější image).
-
 ### Vývoj ze zdrojáků
 
-`docker compose build` sestaví image z `Dockerfile`. Bez hotových APK v `apk-dist/` si je backend sestaví při prvním startu (doinstaluje JDK, pár minut). `start.sh` spouští backend v čistém `python:3.12-slim` s kódem připojeným do `/srv` (bez sestavování image).
+`docker build -t ghcr.io/tlkounev/homemote-backend:latest .` (v této složce) sestaví image z `Dockerfile`. Bez hotových APK v `apk-dist/` si je backend sestaví při prvním startu (doinstaluje JDK, pár minut). `start.sh` spouští backend v čistém `python:3.12-slim` s kódem připojeným do `/srv` (bez sestavování image).
 
 ## Jazyky
 

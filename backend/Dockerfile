@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 # Android platform-tools (adb) – jen pro jednorázovou instalaci helperu na TV.
-# Binárka je pro x86_64 (QNAP TS-464 = Intel).
+# Binárka je pro x86_64 (image je linux/amd64).
 ADD https://dl.google.com/android/repository/platform-tools-latest-linux.zip /tmp/pt.zip
 RUN python -c "import zipfile; zipfile.ZipFile('/tmp/pt.zip').extractall('/opt')" \
  && chmod +x /opt/platform-tools/adb && rm /tmp/pt.zip

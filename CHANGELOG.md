@@ -8,7 +8,7 @@ Verze backendu je v `backend/app/version.py`. Zobrazuje se ve webu dole pod desk
 - **Projekt je na GitHubu** (`tlkounev/homemote`, Apache-2.0). GitHub Actions při každé změně backendu sestaví APK pomocníka i aplikace pro telefon a Docker image `ghcr.io/tlkounev/homemote-backend` s nimi uvnitř. Nová verze vytvoří Release s oběma APK.
 - Image obsahuje hotová APK (`/opt/homemote/apk`), při startu se nic nesestavuje a image už neobsahuje JDK. Image sestavený ze zdrojáků bez APK si je dál sestaví sám.
 - APK se podepisují pevnými klíči z repozitářových Secrets (`HM_KEY_HELPER`, `HM_KEY_PHONE`), aby šly aktualizace přes nainstalované verze.
-- Instalace na QNAP: `deploy/container-station.yml` (hotový image, aktualizace přes Recreate) místo nahrávání ZIPu. `docker-compose.yml` používá hotový image.
+- Instalace odkudkoli s Dockerem: `docker-compose.yml` v kořeni repozitáře (nebo `docker run`) s hotovým image; aktualizace `docker compose pull && docker compose up -d`. Žádné nahrávání ZIPu.
 - Ukázková IP ve formuláři pro přidání zařízení je obecná (`192.168.1.50`).
 
 ## 1.0.5 – 2026-10-30
