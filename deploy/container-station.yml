@@ -1,0 +1,13 @@
+# Homemote – QNAP Container Station → Applications → Create (paste this file).
+# Data (state, pairing, keys) live in /share/Container/homemote/data – create that folder first.
+# Update: Container Station → Applications → homemote → Recreate (pulls the latest image).
+services:
+  homemote-backend:
+    image: ghcr.io/tlkounev/homemote-backend:latest
+    container_name: homemote-backend
+    restart: unless-stopped
+    network_mode: host        # mDNS discovery of TVs needs the container directly in the home LAN
+    volumes:
+      - /share/Container/homemote/data:/data
+    environment:
+      PORT: "888"             # web UI + API port

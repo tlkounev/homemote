@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Homemote</title>
+<style>
+:root {
+  --bg: #E9EDF6; --surface: #FFFFFF; --text: #16203A; --muted: #5B6683; --line: #D5DCEB;
+  --accent: #6A4DF0; --accent-2: #8B3FE0; --err: #C2334D;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0E1630; --surface: #17213F; --text: #E8ECF7; --muted: #8D97B5; --line: #2A3863; --err: #FF7A90; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; width: 100%; max-width: 520px; margin: 0 auto; padding: 28px 20px 24px; display: flex; flex-direction: column; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 6px 20px rgba(91, 75, 245, .35); }
+.brand b { font-size: 1.5rem; letter-spacing: -.01em; display: block; line-height: 1.1; }
+.brand small { color: var(--muted); font-size: .85rem; }
+h1 { font-size: 1.35rem; margin: 6px 0 0; line-height: 1.25; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+ol { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+ol li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+ol li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 700; font-size: .9rem; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.gear { display: inline-block; width: 1.1em; height: 1.1em; vertical-align: -0.18em; }
+button, input { font: inherit; }
+.btn { width: 100%; border: 0; border-radius: 14px; padding: 15px 18px; font-weight: 700; font-size: 1.05rem; cursor: pointer;
+  color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; font-size: .98rem; }
+.btn:disabled { opacity: .6; }
+.manual { display: grid; gap: 10px; }
+.manual input { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+.msg { min-height: 1.5em; font-size: .95rem; }
+.msg.err { color: var(--err); }
+.detail { margin-top: -12px; font: 12px/1.45 ui-monospace, monospace; color: var(--muted); word-break: break-word; user-select: text; }
+.hidden { display: none !important; }
+.scanner { position: relative; border-radius: 18px; overflow: hidden; background: #000; aspect-ratio: 3 / 4; }
+.scanner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scanner .frame { position: absolute; inset: 18%; border: 3px solid rgba(255,255,255,.9); border-radius: 18px;
+  box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
+.spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 0 0 18px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a7bf0"/><stop offset="1" stop-color="#8b3fe0"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#g)"/><g transform="rotate(-22 32 32)"><rect x="21" y="6" width="22" height="52" rx="11" fill="#fff"/><circle cx="32" cy="20" r="6.5" fill="none" stroke="#5a5df0" stroke-width="3.2"/><circle cx="32" cy="20" r="2" fill="#5a5df0"/><circle cx="27.5" cy="35" r="2.4" fill="#8b8fd8"/><circle cx="36.5" cy="35" r="2.4" fill="#8b8fd8"/><rect x="28" y="42" width="8" height="3.4" rx="1.7" fill="#8b8fd8"/></g></svg>
+    <div><b>Homemote</b><small>for Google TV</small></div>
+  </div>
+
+  <section id="intro">
+    <h1 data-t="title"></h1>
+    <p class="muted" style="margin-top:8px" data-t="lead"></p>
+  </section>
+
+  <ol id="steps">
+    <li><span data-t="s1"></span></li>
+    <li><span data-t="s2"></span></li>
+    <li><span data-t="s3"></span></li>
+  </ol>
+
+  <div id="scan-box" class="hidden">
+    <div class="scanner"><video id="video" playsinline muted></video><div class="frame"></div></div>
+  </div>
+
+  <div id="busy" class="hidden"><div class="spinner"></div></div>
+  <p id="msg" class="msg" role="status" aria-live="polite"></p>
+  <p id="detail" class="detail hidden"></p>
+
+  <div id="actions" style="display:grid;gap:10px">
+    <button class="btn" id="scan" type="button" data-t="scan"></button>
+    <button class="btn ghost hidden" id="cancel" type="button" data-t="cancel"></button>
+    <button class="btn ghost" id="show-manual" type="button" data-t="manual"></button>
+  </div>
+
+  <form id="manual-form" class="manual hidden">
+    <p class="muted" data-t="manualText"></p>
+    <input id="manual-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="http://192.168.1.20:888">
+    <button class="btn" type="submit" data-t="connect"></button>
+  </form>
+</main>
+<footer id="ver"></footer>
+
+<!--JSQR-->
+<script>
+"use strict";
+const GEAR = '<svg class="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>';
+const T = {
+  cs: { title: "Propojte aplikaci s Homemote", lead: "Aplikace se k backendu připojí naskenováním QR kódu z webu Homemote.",
+    s1: "Na počítači nebo jiném zařízení, kde už Homemote používáte, otevřete web Homemote a vpravo nahoře klepněte na {gear} <b>Nastavení</b>.",
+    s2: "V části <b>Přihlášené telefony a prohlížeče</b> zvolte <b>Přidat telefon</b>. Zobrazí se QR kód (platí 5 minut).",
+    s3: "Tady klepněte na <b>Naskenovat QR kód</b> a namiřte telefon na obrazovku. Párovat jde doma i mimo domov, pokud má Homemote nastavenou internetovou adresu.",
+    scan: "Naskenovat QR kód", cancel: "Zrušit", manual: "Zadat adresu ručně",
+    manualText: "Bez QR kódu: zadejte adresu webu Homemote a přihlaste se heslem. Přepínání mezi domácí sítí a internetem pak nefunguje.",
+    connect: "Připojit", pairing: "Páruji s backendem…", aim: "Namiřte kameru na QR kód.",
+    badQr: "Tohle není QR kód z Homemote. Použijte kód z Nastavení → Přidat telefon.",
+    unreachable: "Backend se nepodařilo zastihnout. Je telefon ve stejné síti, nebo má Homemote nastavenou internetovou adresu?",
+    code: "Kód je neplatný nebo vypršel. Vytvořte nový přes Přidat telefon.", failed: "Párování selhalo: {err}",
+    camDenied: "Bez přístupu ke kameře nejde QR kód naskenovat. Povolte kameru v nastavení aplikace.",
+    noCam: "Kameru se nepodařilo spustit: {err}", badUrl: "Adresa musí začínat http:// nebo https://", version: "Verze aplikace {v}" },
+  sk: { title: "Prepojte aplikáciu s Homemote", lead: "Aplikácia sa k backendu pripojí naskenovaním QR kódu z webu Homemote.",
+    s1: "Na počítači alebo inom zariadení, kde už Homemote používate, otvorte web Homemote a vpravo hore ťuknite na {gear} <b>Nastavenia</b>.",
+    s2: "V časti <b>Prihlásené telefóny a prehliadače</b> zvoľte <b>Pridať telefón</b>. Zobrazí sa QR kód (platí 5 minút).",
+    s3: "Tu ťuknite na <b>Naskenovať QR kód</b> a namierte telefón na obrazovku. Párovať sa dá doma aj mimo domova, ak má Homemote nastavenú internetovú adresu.",
+    scan: "Naskenovať QR kód", cancel: "Zrušiť", manual: "Zadať adresu ručne",
+    manualText: "Bez QR kódu: zadajte adresu webu Homemote a prihláste sa heslom. Prepínanie medzi domácou sieťou a internetom potom nefunguje.",
+    connect: "Pripojiť", pairing: "Párujem s backendom…", aim: "Namierte kameru na QR kód.",
+    badQr: "Toto nie je QR kód z Homemote. Použite kód z Nastavenia → Pridať telefón.",
+    unreachable: "Backend sa nepodarilo zastihnúť. Je telefón v rovnakej sieti, alebo má Homemote nastavenú internetovú adresu?",
+    code: "Kód je neplatný alebo vypršal. Vytvorte nový cez Pridať telefón.", failed: "Párovanie zlyhalo: {err}",
+    camDenied: "Bez prístupu ku kamere sa QR kód nedá naskenovať. Povoľte kameru v nastaveniach aplikácie.",
+    noCam: "Kameru sa nepodarilo spustiť: {err}", badUrl: "Adresa musí začínať http:// alebo https://", version: "Verzia aplikácie {v}" },
+  en: { title: "Connect the app to Homemote", lead: "The app connects to your backend by scanning a QR code from the Homemote web.",
+    s1: "On a computer or another device where you already use Homemote, open the Homemote web and tap {gear} <b>Settings</b> in the top right corner.",
+    s2: "Under <b>Signed-in phones and browsers</b>, choose <b>Add a phone</b>. A QR code appears (valid for 5 minutes).",
+    s3: "Here, tap <b>Scan QR code</b> and point the phone at the screen. Pairing works at home and away, if Homemote has an internet address set.",
+    scan: "Scan QR code", cancel: "Cancel", manual: "Enter address manually",
+    manualText: "Without a QR code: enter the Homemote web address and sign in with your password. Switching between home network and internet won't work then.",
+    connect: "Connect", pairing: "Pairing with the backend…", aim: "Point the camera at the QR code.",
+    badQr: "This isn't a Homemote QR code. Use the code from Settings → Add a phone.",
+    unreachable: "Couldn't reach the backend. Is the phone on the same network, or does Homemote have an internet address set?",
+    code: "The code is invalid or expired. Create a new one with Add a phone.", failed: "Pairing failed: {err}",
+    camDenied: "The QR code can't be scanned without camera access. Allow the camera in the app settings.",
+    noCam: "Couldn't start the camera: {err}", badUrl: "The address must start with http:// or https://", version: "App version {v}" },
+  de: { title: "App mit Homemote verbinden", lead: "Die App verbindet sich mit dem Backend, indem sie einen QR-Code aus dem Homemote-Web scannt.",
+    s1: "Öffne auf einem Computer oder anderen Gerät, auf dem du Homemote schon nutzt, das Homemote-Web und tippe oben rechts auf {gear} <b>Einstellungen</b>.",
+    s2: "Wähle unter <b>Angemeldete Handys und Browser</b> den Punkt <b>Handy hinzufügen</b>. Ein QR-Code erscheint (5 Minuten gültig).",
+    s3: "Tippe hier auf <b>QR-Code scannen</b> und richte das Handy auf den Bildschirm. Koppeln klappt zu Hause und unterwegs, wenn in Homemote eine Internet-Adresse eingestellt ist.",
+    scan: "QR-Code scannen", cancel: "Abbrechen", manual: "Adresse manuell eingeben",
+    manualText: "Ohne QR-Code: Gib die Adresse des Homemote-Webs ein und melde dich mit dem Passwort an. Der Wechsel zwischen Heimnetz und Internet funktioniert dann nicht.",
+    connect: "Verbinden", pairing: "Kopple mit dem Backend…", aim: "Richte die Kamera auf den QR-Code.",
+    badQr: "Das ist kein Homemote-QR-Code. Nutze den Code aus Einstellungen → Handy hinzufügen.",
+    unreachable: "Das Backend ist nicht erreichbar. Ist das Handy im selben Netz, oder hat Homemote eine Internet-Adresse?",
+    code: "Der Code ist ungültig oder abgelaufen. Erzeuge über Handy hinzufügen einen neuen.", failed: "Kopplung fehlgeschlagen: {err}",
+    camDenied: "Ohne Kamerazugriff lässt sich der QR-Code nicht scannen. Erlaube die Kamera in den App-Einstellungen.",
+    noCam: "Kamera konnte nicht gestartet werden: {err}", badUrl: "Die Adresse muss mit http:// oder https:// beginnen", version: "App-Version {v}" },
+  es: { title: "Conecta la app con Homemote", lead: "La app se conecta al backend escaneando un código QR de la web de Homemote.",
+    s1: "En un ordenador u otro dispositivo donde ya uses Homemote, abre la web de Homemote y toca {gear} <b>Ajustes</b> arriba a la derecha.",
+    s2: "En <b>Móviles y navegadores con sesión iniciada</b>, elige <b>Añadir un móvil</b>. Aparecerá un código QR (válido 5 minutos).",
+    s3: "Aquí toca <b>Escanear código QR</b> y apunta el móvil a la pantalla. Se puede vincular en casa y fuera, si Homemote tiene una dirección de internet.",
+    scan: "Escanear código QR", cancel: "Cancelar", manual: "Introducir dirección a mano",
+    manualText: "Sin código QR: introduce la dirección de la web de Homemote e inicia sesión con la contraseña. Entonces no funcionará el cambio entre red doméstica e internet.",
+    connect: "Conectar", pairing: "Vinculando con el backend…", aim: "Apunta la cámara al código QR.",
+    badQr: "Este no es un código QR de Homemote. Usa el de Ajustes → Añadir un móvil.",
+    unreachable: "No se pudo contactar con el backend. ¿Está el móvil en la misma red o tiene Homemote una dirección de internet?",
+    code: "El código no es válido o ha caducado. Crea uno nuevo con Añadir un móvil.", failed: "Falló la vinculación: {err}",
+    camDenied: "Sin acceso a la cámara no se puede escanear el código. Permite la cámara en los ajustes de la app.",
+    noCam: "No se pudo iniciar la cámara: {err}", badUrl: "La dirección debe empezar por http:// o https://", version: "Versión de la app {v}" },
+  fr: { title: "Connecter l’app à Homemote", lead: "L’app se connecte au backend en scannant un code QR du site Homemote.",
+    s1: "Sur un ordinateur ou un autre appareil où vous utilisez déjà Homemote, ouvrez le site Homemote et touchez {gear} <b>Paramètres</b> en haut à droite.",
+    s2: "Dans <b>Téléphones et navigateurs connectés</b>, choisissez <b>Ajouter un téléphone</b>. Un code QR s’affiche (valable 5 minutes).",
+    s3: "Ici, touchez <b>Scanner le code QR</b> et visez l’écran avec le téléphone. L’association fonctionne à la maison et ailleurs si Homemote a une adresse internet.",
+    scan: "Scanner le code QR", cancel: "Annuler", manual: "Saisir l’adresse manuellement",
+    manualText: "Sans code QR : saisissez l’adresse du site Homemote et connectez-vous avec le mot de passe. Le passage entre réseau domestique et internet ne fonctionnera pas.",
+    connect: "Se connecter", pairing: "Association avec le backend…", aim: "Visez le code QR avec la caméra.",
+    badQr: "Ce n’est pas un code QR Homemote. Utilisez celui de Paramètres → Ajouter un téléphone.",
+    unreachable: "Backend injoignable. Le téléphone est-il sur le même réseau, ou Homemote a-t-il une adresse internet ?",
+    code: "Le code n’est pas valide ou a expiré. Créez-en un nouveau via Ajouter un téléphone.", failed: "Échec de l’association : {err}",
+    camDenied: "Impossible de scanner sans accès à la caméra. Autorisez la caméra dans les paramètres de l’app.",
+    noCam: "Impossible de démarrer la caméra : {err}", badUrl: "L’adresse doit commencer par http:// ou https://", version: "Version de l’app {v}" },
+  it: { title: "Collega l’app a Homemote", lead: "L’app si collega al backend scansionando un codice QR dal sito Homemote.",
+    s1: "Su un computer o un altro dispositivo dove usi già Homemote, apri il sito Homemote e tocca {gear} <b>Impostazioni</b> in alto a destra.",
+    s2: "In <b>Telefoni e browser con accesso</b> scegli <b>Aggiungi un telefono</b>. Compare un codice QR (valido 5 minuti).",
+    s3: "Qui tocca <b>Scansiona codice QR</b> e inquadra lo schermo. L’associazione funziona a casa e fuori, se Homemote ha un indirizzo internet.",
+    scan: "Scansiona codice QR", cancel: "Annulla", manual: "Inserisci l’indirizzo a mano",
+    manualText: "Senza codice QR: inserisci l’indirizzo del sito Homemote e accedi con la password. Il passaggio tra rete di casa e internet non funzionerà.",
+    connect: "Collega", pairing: "Associazione con il backend…", aim: "Inquadra il codice QR con la fotocamera.",
+    badQr: "Questo non è un codice QR di Homemote. Usa quello di Impostazioni → Aggiungi un telefono.",
+    unreachable: "Backend non raggiungibile. Il telefono è nella stessa rete, o Homemote ha un indirizzo internet?",
+    code: "Il codice non è valido o è scaduto. Creane uno nuovo con Aggiungi un telefono.", failed: "Associazione non riuscita: {err}",
+    camDenied: "Senza accesso alla fotocamera non si può scansionare. Consenti la fotocamera nelle impostazioni dell’app.",
+    noCam: "Impossibile avviare la fotocamera: {err}", badUrl: "L’indirizzo deve iniziare con http:// o https://", version: "Versione dell’app {v}" },
+  nl: { title: "Koppel de app aan Homemote", lead: "De app maakt verbinding met de backend door een QR-code van de Homemote-website te scannen.",
+    s1: "Open op een computer of ander apparaat waarop je Homemote al gebruikt de Homemote-website en tik rechtsboven op {gear} <b>Instellingen</b>.",
+    s2: "Kies bij <b>Aangemelde telefoons en browsers</b> voor <b>Telefoon toevoegen</b>. Er verschijnt een QR-code (5 minuten geldig).",
+    s3: "Tik hier op <b>QR-code scannen</b> en richt de telefoon op het scherm. Koppelen werkt thuis en onderweg, als Homemote een internetadres heeft.",
+    scan: "QR-code scannen", cancel: "Annuleren", manual: "Adres handmatig invoeren",
+    manualText: "Zonder QR-code: voer het adres van de Homemote-website in en meld je aan met het wachtwoord. Wisselen tussen thuisnetwerk en internet werkt dan niet.",
+    connect: "Verbinden", pairing: "Koppelen met de backend…", aim: "Richt de camera op de QR-code.",
+    badQr: "Dit is geen Homemote-QR-code. Gebruik de code uit Instellingen → Telefoon toevoegen.",
+    unreachable: "Backend niet bereikbaar. Zit de telefoon op hetzelfde netwerk, of heeft Homemote een internetadres?",
+    code: "De code is ongeldig of verlopen. Maak een nieuwe via Telefoon toevoegen.", failed: "Koppelen mislukt: {err}",
+    camDenied: "Zonder cameratoegang kan de QR-code niet worden gescand. Sta de camera toe in de app-instellingen.",
+    noCam: "Camera kon niet starten: {err}", badUrl: "Het adres moet beginnen met http:// of https://", version: "App-versie {v}" },
+  pl: { title: "Połącz aplikację z Homemote", lead: "Aplikacja łączy się z backendem po zeskanowaniu kodu QR ze strony Homemote.",
+    s1: "Na komputerze lub innym urządzeniu, na którym używasz już Homemote, otwórz stronę Homemote i stuknij {gear} <b>Ustawienia</b> w prawym górnym rogu.",
+    s2: "W sekcji <b>Zalogowane telefony i przeglądarki</b> wybierz <b>Dodaj telefon</b>. Pojawi się kod QR (ważny 5 minut).",
+    s3: "Tutaj stuknij <b>Zeskanuj kod QR</b> i skieruj telefon na ekran. Parowanie działa w domu i poza nim, jeśli Homemote ma ustawiony adres internetowy.",
+    scan: "Zeskanuj kod QR", cancel: "Anuluj", manual: "Wpisz adres ręcznie",
+    manualText: "Bez kodu QR: wpisz adres strony Homemote i zaloguj się hasłem. Przełączanie między siecią domową a internetem nie będzie wtedy działać.",
+    connect: "Połącz", pairing: "Parowanie z backendem…", aim: "Skieruj aparat na kod QR.",
+    badQr: "To nie jest kod QR Homemote. Użyj kodu z Ustawienia → Dodaj telefon.",
+    unreachable: "Nie udało się połączyć z backendem. Czy telefon jest w tej samej sieci albo czy Homemote ma adres internetowy?",
+    code: "Kod jest nieprawidłowy lub wygasł. Utwórz nowy przez Dodaj telefon.", failed: "Parowanie nie powiodło się: {err}",
+    camDenied: "Bez dostępu do aparatu nie można zeskanować kodu. Zezwól na aparat w ustawieniach aplikacji.",
+    noCam: "Nie udało się uruchomić aparatu: {err}", badUrl: "Adres musi zaczynać się od http:// lub https://", version: "Wersja aplikacji {v}" },
+  pt: { title: "Ligue a app ao Homemote", lead: "A app liga-se ao backend lendo um código QR do site do Homemote.",
+    s1: "Num computador ou noutro dispositivo onde já use o Homemote, abra o site do Homemote e toque em {gear} <b>Definições</b> no canto superior direito.",
+    s2: "Em <b>Telemóveis e navegadores com sessão iniciada</b>, escolha <b>Adicionar um telemóvel</b>. Aparece um código QR (válido 5 minutos).",
+    s3: "Aqui, toque em <b>Ler código QR</b> e aponte o telemóvel para o ecrã. Funciona em casa e fora, se o Homemote tiver um endereço de internet.",
+    scan: "Ler código QR", cancel: "Cancelar", manual: "Introduzir endereço manualmente",
+    manualText: "Sem código QR: introduza o endereço do site do Homemote e inicie sessão com a palavra-passe. A troca entre rede doméstica e internet não funcionará.",
+    connect: "Ligar", pairing: "A emparelhar com o backend…", aim: "Aponte a câmara para o código QR.",
+    badQr: "Este não é um código QR do Homemote. Use o de Definições → Adicionar um telemóvel.",
+    unreachable: "Não foi possível contactar o backend. O telemóvel está na mesma rede, ou o Homemote tem um endereço de internet?",
+    code: "O código é inválido ou expirou. Crie um novo em Adicionar um telemóvel.", failed: "O emparelhamento falhou: {err}",
+    camDenied: "Sem acesso à câmara não é possível ler o código. Permita a câmara nas definições da app.",
+    noCam: "Não foi possível iniciar a câmara: {err}", badUrl: "O endereço tem de começar por http:// ou https://", version: "Versão da app {v}" },
+  uk: { title: "Під’єднайте застосунок до Homemote", lead: "Застосунок під’єднується до бекенду, відсканувавши QR-код із вебу Homemote.",
+    s1: "На комп’ютері чи іншому пристрої, де вже користуєтеся Homemote, відкрийте веб Homemote і торкніться {gear} <b>Налаштування</b> вгорі праворуч.",
+    s2: "У розділі <b>Телефони та браузери, з яких виконано вхід</b> виберіть <b>Додати телефон</b>. З’явиться QR-код (дійсний 5 хвилин).",
+    s3: "Тут торкніться <b>Сканувати QR-код</b> і наведіть телефон на екран. З’єднання працює вдома й поза домом, якщо в Homemote задано інтернет-адресу.",
+    scan: "Сканувати QR-код", cancel: "Скасувати", manual: "Ввести адресу вручну",
+    manualText: "Без QR-коду: введіть адресу вебу Homemote й увійдіть паролем. Перемикання між домашньою мережею та інтернетом тоді не працюватиме.",
+    connect: "Під’єднати", pairing: "З’єднання з бекендом…", aim: "Наведіть камеру на QR-код.",
+    badQr: "Це не QR-код Homemote. Використайте код із Налаштування → Додати телефон.",
+    unreachable: "Не вдалося зв’язатися з бекендом. Телефон у тій самій мережі, або в Homemote задано інтернет-адресу?",
+    code: "Код недійсний або прострочений. Створіть новий через Додати телефон.", failed: "Не вдалося з’єднати: {err}",
+    camDenied: "Без доступу до камери QR-код не відсканувати. Дозвольте камеру в налаштуваннях застосунку.",
+    noCam: "Не вдалося запустити камеру: {err}", badUrl: "Адреса має починатися з http:// або https://", version: "Версія застосунку {v}" },
+  hi: { title: "ऐप को Homemote से जोड़ें", lead: "ऐप Homemote वेब से QR कोड स्कैन करके बैकएंड से जुड़ता है।",
+    s1: "जिस कंप्यूटर या डिवाइस पर आप पहले से Homemote इस्तेमाल करते हैं, वहाँ Homemote वेब खोलें और ऊपर दाईं ओर {gear} <b>सेटिंग्स</b> पर टैप करें।",
+    s2: "<b>साइन इन किए गए फ़ोन और ब्राउज़र</b> में <b>फ़ोन जोड़ें</b> चुनें। एक QR कोड दिखेगा (5 मिनट तक मान्य)।",
+    s3: "यहाँ <b>QR कोड स्कैन करें</b> पर टैप करें और फ़ोन को स्क्रीन की ओर करें। अगर Homemote में इंटरनेट पता सेट है, तो घर के बाहर भी जोड़ सकते हैं।",
+    scan: "QR कोड स्कैन करें", cancel: "रद्द करें", manual: "पता ख़ुद डालें",
+    manualText: "QR कोड के बिना: Homemote वेब का पता डालें और पासवर्ड से साइन इन करें। तब घरेलू नेटवर्क और इंटरनेट के बीच अपने आप बदलना काम नहीं करेगा।",
+    connect: "कनेक्ट करें", pairing: "बैकएंड से जोड़ा जा रहा है…", aim: "कैमरा QR कोड की ओर करें।",
+    badQr: "यह Homemote का QR कोड नहीं है। सेटिंग्स → फ़ोन जोड़ें वाला कोड इस्तेमाल करें।",
+    unreachable: "बैकएंड तक नहीं पहुँच सके। क्या फ़ोन उसी नेटवर्क में है, या Homemote में इंटरनेट पता सेट है?",
+    code: "कोड अमान्य है या उसकी समय-सीमा ख़त्म हो गई। फ़ोन जोड़ें से नया कोड बनाएँ।", failed: "जोड़ना विफल: {err}",
+    camDenied: "कैमरे की अनुमति के बिना QR कोड स्कैन नहीं हो सकता। ऐप सेटिंग्स में कैमरा चालू करें।",
+    noCam: "कैमरा शुरू नहीं हो सका: {err}", badUrl: "पता http:// या https:// से शुरू होना चाहिए", version: "ऐप वर्शन {v}" },
+  zh: { title: "将应用连接到 Homemote", lead: "应用通过扫描 Homemote 网页上的二维码连接到后端。",
+    s1: "在已经使用 Homemote 的电脑或其他设备上打开 Homemote 网页，点按右上角的 {gear} <b>设置</b>。",
+    s2: "在 <b>已登录的手机和浏览器</b> 中选择 <b>添加手机</b>，会显示一个二维码（5 分钟内有效）。",
+    s3: "在这里点按 <b>扫描二维码</b>，用手机对准屏幕。如果 Homemote 设置了互联网地址，在家或在外都能配对。",
+    scan: "扫描二维码", cancel: "取消", manual: "手动输入地址",
+    manualText: "不用二维码：输入 Homemote 网页地址并用密码登录。这样将无法在家庭网络和互联网之间自动切换。",
+    connect: "连接", pairing: "正在与后端配对…", aim: "将摄像头对准二维码。",
+    badQr: "这不是 Homemote 的二维码。请使用 设置 → 添加手机 中的二维码。",
+    unreachable: "无法连接后端。手机是否在同一网络，或 Homemote 是否设置了互联网地址？",
+    code: "代码无效或已过期。请通过 添加手机 生成新的代码。", failed: "配对失败：{err}",
+    camDenied: "没有摄像头权限无法扫描二维码。请在应用设置中允许使用摄像头。",
+    noCam: "无法启动摄像头：{err}", badUrl: "地址必须以 http:// 或 https:// 开头", version: "应用版本 {v}" },
+  ja: { title: "アプリを Homemote に接続", lead: "Homemote のウェブに表示される QR コードを読み取って、バックエンドに接続します。",
+    s1: "すでに Homemote を使っているパソコンなどで Homemote のウェブを開き、右上の {gear} <b>設定</b> をタップします。",
+    s2: "<b>ログイン中のスマートフォンとブラウザ</b> で <b>スマートフォンを追加</b> を選ぶと、QR コードが表示されます（有効期間 5 分）。",
+    s3: "ここで <b>QR コードを読み取る</b> をタップし、スマートフォンを画面に向けます。Homemote にインターネットのアドレスが設定されていれば、外出先でもペア設定できます。",
+    scan: "QR コードを読み取る", cancel: "キャンセル", manual: "アドレスを手動で入力",
+    manualText: "QR コードを使わない場合：Homemote のウェブのアドレスを入力し、パスワードでログインします。この場合、ホームネットワークとインターネットの自動切り替えは使えません。",
+    connect: "接続", pairing: "バックエンドとペア設定しています…", aim: "カメラを QR コードに向けてください。",
+    badQr: "Homemote の QR コードではありません。設定 → スマートフォンを追加 のコードを使ってください。",
+    unreachable: "バックエンドに接続できません。スマートフォンが同じネットワークにあるか、Homemote にインターネットのアドレスが設定されているか確認してください。",
+    code: "コードが無効か期限切れです。スマートフォンを追加 から新しいコードを作成してください。", failed: "ペア設定に失敗しました：{err}",
+    camDenied: "カメラへのアクセスがないと QR コードを読み取れません。アプリの設定でカメラを許可してください。",
+    noCam: "カメラを起動できませんでした：{err}", badUrl: "アドレスは http:// または https:// で始まる必要があります", version: "アプリのバージョン {v}" },
+  ko: { title: "앱을 Homemote에 연결", lead: "Homemote 웹의 QR 코드를 스캔하여 백엔드에 연결합니다.",
+    s1: "이미 Homemote를 사용하는 컴퓨터나 다른 기기에서 Homemote 웹을 열고 오른쪽 위의 {gear} <b>설정</b>을 탭하세요.",
+    s2: "<b>로그인된 휴대폰과 브라우저</b>에서 <b>휴대폰 추가</b>를 선택하면 QR 코드가 나타납니다(5분 동안 유효).",
+    s3: "여기에서 <b>QR 코드 스캔</b>을 탭하고 휴대폰을 화면에 맞추세요. Homemote에 인터넷 주소가 설정되어 있으면 집 밖에서도 페어링할 수 있습니다.",
+    scan: "QR 코드 스캔", cancel: "취소", manual: "주소 직접 입력",
+    manualText: "QR 코드 없이: Homemote 웹 주소를 입력하고 비밀번호로 로그인하세요. 이 경우 홈 네트워크와 인터넷 간 자동 전환은 작동하지 않습니다.",
+    connect: "연결", pairing: "백엔드와 페어링 중…", aim: "카메라를 QR 코드에 맞추세요.",
+    badQr: "Homemote QR 코드가 아닙니다. 설정 → 휴대폰 추가의 코드를 사용하세요.",
+    unreachable: "백엔드에 연결할 수 없습니다. 휴대폰이 같은 네트워크에 있거나 Homemote에 인터넷 주소가 설정되어 있나요?",
+    code: "코드가 잘못되었거나 만료되었습니다. 휴대폰 추가에서 새 코드를 만드세요.", failed: "페어링 실패: {err}",
+    camDenied: "카메라 권한이 없으면 QR 코드를 스캔할 수 없습니다. 앱 설정에서 카메라를 허용하세요.",
+    noCam: "카메라를 시작할 수 없습니다: {err}", badUrl: "주소는 http:// 또는 https://로 시작해야 합니다", version: "앱 버전 {v}" },
+};
+const lang = ((navigator.languages && navigator.languages[0]) || navigator.language || "en").toLowerCase().split("-")[0];
+const L = T[lang] || T.en;
+const t = (k, p = {}) => (L[k] ?? T.en[k] ?? k).replace(/\{(\w+)\}/g, (_, x) => x === "gear" ? GEAR : (p[x] ?? ""));
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const $ = (s) => document.querySelector(s);
+document.documentElement.lang = T[lang] ? lang : "en";
+document.querySelectorAll("[data-t]").forEach(el => { el.innerHTML = t(el.dataset.t); });
+try { $("#ver").textContent = t("version", { v: window.HM ? HM.version() : "?" }); } catch (e) {}
+
+function msg(text, err) { const m = $("#msg"); m.textContent = text || ""; m.classList.toggle("err", !!err); const d = $("#detail"); if (d) d.classList.add("hidden"); }
+function busy(on) { $("#busy").classList.toggle("hidden", !on); $("#scan").disabled = on; }
+
+/* ---- čtečka QR: BarcodeDetector (když ho WebView má), jinak jsQR ---- */
+let stream = null, timer = null, detector = null;
+function stopCamera() {
+  clearInterval(timer); timer = null;
+  if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+  $("#scan-box").classList.add("hidden"); $("#cancel").classList.add("hidden");
+  $("#scan").classList.remove("hidden"); $("#steps").classList.remove("hidden");
+}
+async function startCamera() {
+  msg("");
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+  } catch (e) { msg(t("noCam", { err: e.message || e.name }), true); return; }
+  const v = $("#video"); v.srcObject = stream; await v.play().catch(() => {});
+  $("#steps").classList.add("hidden"); $("#scan-box").classList.remove("hidden");
+  $("#scan").classList.add("hidden"); $("#cancel").classList.remove("hidden");
+  msg(t("aim"));
+  try { if ("BarcodeDetector" in window) detector = new BarcodeDetector({ formats: ["qr_code"] }); } catch (e) { detector = null; }
+  const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d", { willReadFrequently: true });
+  let busyFrame = false;
+  timer = setInterval(async () => {
+    if (busyFrame || !v.videoWidth) return;
+    busyFrame = true;
+    try {
+      let text = null;
+      if (detector) {
+        const codes = await detector.detect(v).catch(() => []);
+        if (codes.length) text = codes[0].rawValue;
+      }
+      if (!text && window.jsQR) {
+        const w = Math.min(v.videoWidth, 800), h = Math.round(v.videoHeight * w / v.videoWidth);
+        canvas.width = w; canvas.height = h; ctx.drawImage(v, 0, 0, w, h);
+        const code = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
+        if (code) text = code.data;
+      }
+      if (text) found(text);
+    } finally { busyFrame = false; }
+  }, 220);
+}
+function found(text) {
+  if (!/^homemote:\/\/pair\?/i.test(text)) { msg(t("badQr"), true); return; }
+  stopCamera();
+  if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {}
+  HM.qr(text);
+}
+function cameraDenied() { msg(t("camDenied"), true); }
+function pairing() { stopCamera(); busy(true); msg(t("pairing")); }
+function pairError(code) {
+  busy(false);
+  const [kind, detail] = String(code).split(/\|(.*)/s);
+  const map = { "bad-qr": "badQr", unreachable: "unreachable", code: "code" };
+  msg(map[kind] ? t(map[kind]) : t("failed", { err: code }), true);
+  const d = $("#detail"); d.textContent = map[kind] && detail ? detail : ""; d.classList.toggle("hidden", !(map[kind] && detail));
+}
+$("#scan").onclick = () => { msg(""); HM.scan(); };
+$("#cancel").onclick = () => { stopCamera(); msg(""); };
+$("#show-manual").onclick = () => { $("#manual-form").classList.toggle("hidden"); $("#manual-url").focus(); };
+$("#manual-form").onsubmit = (e) => {
+  e.preventDefault();
+  if (!HM.manual($("#manual-url").value)) msg(t("badUrl"), true);
+};
+</script>
+</body>
+</html>

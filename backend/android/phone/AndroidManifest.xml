@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Zdroj pro apk/build.py (překládá se vlastním kodérem do binárního AXML, bez aapt). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="net.homemote.app"
+    android:versionCode="@VERSION_CODE@"
+    android:versionName="@VERSION_NAME@">
+
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="36" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <application
+        android:label="Homemote"
+        android:icon="@ICON@"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="true"
+        android:theme="@0x010302E3">
+
+        <activity
+            android:name="net.homemote.app.MainActivity"
+            android:label="Homemote"
+            android:exported="true"
+            android:launchMode="2"
+            android:configChanges="0x40000FB0"
+            android:windowSoftInputMode="0x10">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="homemote" android:host="pair" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="net.homemote.app.SetupActivity"
+            android:label="Homemote"
+            android:exported="false"
+            android:configChanges="0x40000FB0" />
+    </application>
+</manifest>

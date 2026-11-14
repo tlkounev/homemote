@@ -1,0 +1,1967 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1630" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E9EDF6" media="(prefers-color-scheme: light)">
+<title>Homemote</title>
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0E1630;
+  --surface: #17213F;
+  --surface-2: #1F2B50;
+  --line: #2A3863;
+  --text: #E8ECF7;
+  --muted: #8D97B5;
+  --bad: #F07178;
+  --good: #6FD3A8;
+  --warn: #F2B45A;
+  --glow: 110, 140, 255;
+  --glass-a: rgba(255,255,255,.11); --glass-b: rgba(255,255,255,.035); --glass-edge: rgba(255,255,255,.16);
+  --glass-hi: rgba(255,255,255,.22); --pane: rgba(255,255,255,.05); --key: rgba(255,255,255,.07); --key-line: rgba(255,255,255,.12);
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #E9EDF6;
+    --surface: #FFFFFF;
+    --surface-2: #F2F4FA;
+    --line: #D3D9E8;
+    --text: #16203A;
+    --muted: #5D6886;
+    --bad: #C2414B;
+    --good: #1E8A5F;
+    --warn: #C77A0A;
+    --glass-a: rgba(255,255,255,.72); --glass-b: rgba(255,255,255,.42); --glass-edge: rgba(255,255,255,.9);
+    --glass-hi: rgba(255,255,255,1); --pane: rgba(255,255,255,.45); --key: rgba(255,255,255,.7); --key-line: rgba(22,32,58,.12);
+    color-scheme: light;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 400 16px/1.5 var(--body); min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid rgb(var(--glow)); outline-offset: 3px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.muted { color: var(--muted); }
+.hidden { display: none !important; }
+.err { color: var(--bad); font-size: .95rem; min-height: 1.2em; }
+
+/* ---------- layout ---------- */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+header.top { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; }
+header.top h1 { font-size: 1.15rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 10px; }
+header.top h1 .brand-text { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+@media (max-width: 520px) {
+  header.top h1 .brand-text { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.1; }
+  header.top h1 small { margin-left: 0 !important; padding-bottom: 0 !important; font-size: .7rem !important; }
+  .lang-btn > span { display: none; }
+  header.top { gap: 8px; } .top-right { gap: 8px !important; }
+}
+header.top h1 small { font-family: var(--body, inherit); font-size: .78rem; font-weight: 400; color: var(--muted); white-space: nowrap; }
+header.top h1 img { border-radius: 7px; box-shadow: 0 4px 14px rgba(91, 75, 245, .35); }
+.top-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: .875rem; color: var(--muted); }
+.live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.live.ok::before { background: var(--good); }
+.icon-btn {
+  width: 40px; height: 40px; display: grid; place-items: center; flex: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+}
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* záložky zařízení – přecházejí do horní hrany desky */
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding: 0 22px; margin-bottom: -1px; position: relative; z-index: 2; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+  padding: 10px 18px; border-radius: 16px 16px 0 0; border: 1px solid var(--key-line); border-bottom: 0;
+  background: var(--pane); color: var(--muted); font-family: var(--display); font-weight: 700; font-size: 1.3rem;
+}
+.tab[aria-selected=true] { background: var(--glass-a); color: var(--text); border-color: var(--glass-edge); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.ok { background: var(--good); }
+.dot.warn { background: var(--warn); }
+.dot.bad { background: var(--bad); }
+.tab { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.tab.tab-dragging { position: relative; z-index: 3; color: var(--text); border-color: rgb(var(--glow)); box-shadow: 0 -6px 18px rgba(var(--glow), .35); transform: translateY(-3px); }
+.tabs.tabs-dragging, .tabs.tabs-dragging .tab { cursor: grabbing; }
+
+/* ambientní světlo v barvě aplikace za deskou */
+.ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(42% 40% at 34% 46%, rgba(var(--glow), .6), rgba(var(--glow), 0) 72%), radial-gradient(28% 30% at 78% 58%, rgba(90, 110, 255, .22), transparent 70%);
+  opacity: var(--glow-on, 1); transition: opacity .8s ease, background .8s ease; }
+.wrap > *:not(.ambient) { position: relative; z-index: 1; }
+.wrap > header.top { z-index: 30; }
+
+/* deska zařízení */
+.slab {
+  border-radius: 30px; padding: 20px 24px 26px;
+  background: linear-gradient(160deg, var(--glass-a), var(--glass-b) 45%, var(--glass-a));
+  border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), 0 30px 80px rgba(0, 0, 0, .3);
+  backdrop-filter: blur(26px) saturate(140%); -webkit-backdrop-filter: blur(26px) saturate(140%);
+}
+.slab-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; min-height: 40px; }
+.tv-head { color: var(--muted); font-size: .82rem; display: flex; flex-wrap: wrap; gap: 2px 14px; min-width: 0; flex: 1 1 auto; }
+.tv-meta { margin-left: auto; font-size: .88rem; white-space: nowrap; flex: none; }
+.slab-head > .icon-btn { flex: none; }
+.slab-head > .icon-btn { background: var(--key); border-color: var(--key-line); }
+.tab[aria-selected=true] { cursor: text; }
+.tab-rename { display: inline-flex; align-items: center; gap: 10px; }
+.tab-rename input { font: inherit; color: inherit; width: 14ch; min-width: 6ch; background: var(--key); border: 1px solid var(--key-line); border-radius: 8px; padding: 0 8px; }
+.foot { text-align: center; color: var(--muted); font-size: .8rem; padding: 22px 0 0; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .slab-head { gap: 10px; } }
+.rename-form { display: flex; gap: 8px; align-items: center; }
+.rename-form input {
+  min-width: 0; width: 16ch; font-family: var(--display); font-weight: 700; font-size: 1.1rem;
+  background: var(--key); border: 1px solid var(--key-line); border-radius: 10px; padding: 4px 10px;
+}
+.rename-form .btn { padding: 7px 12px; }
+
+/* tři části desky: pořadí si volí uživatel (úchyt nahoře) */
+.zones { display: grid; gap: 22px; align-items: start; }
+.zone { position: relative; min-width: 0; }
+.zone.full { grid-column: 1 / -1; }
+.zone.apps.full { padding-top: 6px; }
+.grip {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 3;
+  width: 56px; height: 20px; border: 1px solid transparent; background: none; color: var(--muted); opacity: 0;
+  display: grid; place-items: center; cursor: grab; touch-action: none; border-radius: 10px;
+  pointer-events: none; transition: opacity .18s ease, background .18s ease;
+}
+.zone.grip-near .grip, .zone.moving .grip, .grip:focus-visible {
+  opacity: 1; pointer-events: auto; background: var(--key); border-color: var(--key-line);
+}
+.grip:hover { color: var(--text); }
+.grip svg { width: 22px; height: 10px; }
+.zone.drop-target { outline: 2px dashed rgb(var(--glow)); outline-offset: 6px; border-radius: 22px; }
+.zone.moving { opacity: .5; }
+@media (max-width: 900px) { .zones { grid-template-columns: 1fr !important; } .zone { grid-column: 1 / -1; } .slab { padding: 18px 16px 20px; border-radius: 24px; } .tab { font-size: 1.1rem; padding: 9px 14px; } .tabs { padding: 0 14px; } }
+
+/* ---------- obrazovka: jediný výrazný prvek ---------- */
+.screen-area { position: relative; }
+.screen-box { position: relative; }
+.screen {
+  position: relative; aspect-ratio: 16 / 9; border-radius: 18px;
+  background: #05070D; color: #F2F4FA;
+  border: 8px solid #1A1D24; box-shadow: 0 1px 0 rgba(255,255,255,.06) inset;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+@media (max-width: 520px) { .screen { aspect-ratio: auto; min-height: 250px; border-width: 6px; } }
+.screen-inner { flex: 1; display: flex; flex-direction: column; padding: clamp(16px, 3vw, 28px); gap: 10px; min-height: 0; }
+.screen .app-row { display: flex; align-items: center; gap: 12px; color: #B9C0D4; font-size: .95rem; padding-right: 100px; }
+.screen .app-row img, .app-fallback {
+  width: 36px; height: 36px; border-radius: 9px; object-fit: cover; background: rgba(255,255,255,.08);
+}
+.app-fallback { display: grid; place-items: center; font-family: var(--display); font-weight: 700; color: #fff; }
+.screen .title {
+  font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 4.2vw, 2.9rem);
+  line-height: 1.05; margin-top: auto; max-width: 24ch;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.screen .subtitle { color: #B9C0D4; font-size: 1.05rem; max-width: 60ch; }
+.screen .state-msg { margin: auto 0; max-width: 46ch; }
+.screen .state-msg h2 { font-size: clamp(1.3rem, 3vw, 2rem); margin-bottom: 6px; }
+.screen .state-msg p { margin: 0 0 14px; color: #B9C0D4; }
+.screen .err { color: #FF9AA2; }
+
+/* kolečko hlasitosti v rohu obrazovky */
+.vol-ring {
+  position: absolute; top: 18px; right: 18px; width: 96px; height: 96px; z-index: 2;
+  touch-action: none; cursor: grab; border: 0; padding: 0; background: none; color: #F2F4FA;
+  border-radius: 50%;
+}
+.vol-ring:active { cursor: grabbing; }
+.vol-ring svg { width: 100%; height: 100%; display: block; }
+.vol-ring .num {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--display); font-weight: 700; font-size: 1.8rem; font-variant-numeric: tabular-nums;
+}
+.vol-ring.muted .num { font-size: .78rem; font-family: var(--body); font-weight: 700; }
+@media (max-width: 520px) { .vol-ring { width: 74px; height: 74px; top: 14px; right: 14px; } .vol-ring .num { font-size: 1.4rem; } }
+
+/* velký ukazatel hlasitosti uprostřed obrazovky */
+.vol-osd {
+  position: absolute; inset: 8px; display: grid; place-items: center; pointer-events: none; z-index: 3;
+  opacity: 0; transition: opacity .25s ease;
+}
+.vol-osd.show { opacity: 1; }
+.vol-osd .card {
+  display: grid; justify-items: center; gap: 6px; padding: 22px 30px 18px; border-radius: 26px;
+  background: rgba(5, 7, 13, .78); backdrop-filter: blur(8px); color: #F2F4FA;
+}
+.vol-osd .dial { position: relative; width: min(34vw, 170px); aspect-ratio: 1; }
+.vol-osd svg { width: 100%; height: 100%; display: block; }
+.vol-osd .big { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: clamp(2.4rem, 7vw, 3.6rem); font-variant-numeric: tabular-nums; }
+.vol-osd .lbl { color: #B9C0D4; font-size: .95rem; }
+
+.seek { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; color: #B9C0D4; font-size: .9rem; }
+input[type=range].slider { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; margin: 0; }
+input[type=range].slider::-webkit-slider-runnable-track { height: 5px; border-radius: 3px;
+  background: linear-gradient(to right, #F2F4FA var(--p, 0%), rgba(255,255,255,.2) var(--p, 0%)); }
+input[type=range].slider::-moz-range-track { height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); }
+input[type=range].slider::-moz-range-progress { height: 5px; border-radius: 3px; background: #F2F4FA; }
+input[type=range].slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6.5px; border-radius: 50%; background: #fff; border: 0; }
+input[type=range].slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; }
+input[type=range].slider:disabled { opacity: .35; }
+
+.transport { display: flex; justify-content: center; gap: 10px; padding: 14px 0 4px; }
+.transport button { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--key); border: 1px solid var(--key-line); }
+.transport button.primary { width: 64px; height: 64px; background: var(--text); color: var(--bg); border: 0; }
+.transport svg { width: 22px; height: 22px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 18px; border-radius: 12px; border: 0; font-weight: 700; background: #F2F4FA; color: #0E1630;
+}
+.btn.ghost { background: transparent; color: inherit; border: 1px solid var(--line); }
+.btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
+.btn:disabled { opacity: .5; cursor: default; }
+.code-input {
+  font-family: var(--display); font-size: 1.8rem; letter-spacing: .3em; text-transform: uppercase;
+  width: 9.5ch; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.06); color: #fff;
+}
+.inline-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- ovladač ---------- */
+.remote-pane { background: var(--pane); border: 1px solid var(--key-line); border-radius: 24px; padding: 20px; display: grid; gap: 18px; justify-items: center; }
+.remote[aria-disabled=true] .remote-pane { opacity: .45; pointer-events: none; }
+.rbtn { background: var(--key); border: 1px solid var(--key-line); border-radius: 14px; height: 48px; min-width: 48px; display: grid; place-items: center; padding: 0 12px; font-size: .9rem; }
+.rbtn svg { width: 22px; height: 22px; }
+.rbtn:active, .dpad button:active, .transport button:active, .key:active { transform: scale(.96); }
+.row { display: flex; gap: 10px; justify-content: center; width: 100%; }
+.row .rbtn { flex: 1; }
+.dpad { position: relative; width: 224px; height: 224px; border-radius: 50%; background: var(--key); border: 1px solid var(--key-line); }
+.dpad button { position: absolute; background: transparent; border: 0; display: grid; place-items: center; color: var(--muted); }
+.dpad button svg { width: 26px; height: 26px; }
+.dpad .up { top: 0; left: 30%; width: 40%; height: 30%; }
+.dpad .down { bottom: 0; left: 30%; width: 40%; height: 30%; }
+.dpad .left { left: 0; top: 30%; width: 30%; height: 40%; }
+.dpad .right { right: 0; top: 30%; width: 30%; height: 40%; }
+.dpad .ok { top: 50%; left: 50%; width: 92px; height: 92px; transform: translate(-50%, -50%); border-radius: 50%; background: var(--key); border: 1px solid var(--key-line); color: var(--text); font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+.dpad .ok:active { transform: translate(-50%, -50%) scale(.96); }
+.vol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: 10px; width: 100%; }
+.vol .mid { display: grid; gap: 10px; align-content: space-between; }
+.vol .mid .rbtn { width: 100%; }
+.vol .rocker.vert { flex-direction: column; align-items: stretch; background: var(--key); }
+.vol .rocker.vert button { width: 100%; height: 48px; }
+.vol .rocker.vert button + button { border-left: 0; }
+.vol .rocker .rlbl { font-size: .66rem; font-weight: 700; letter-spacing: .12em; color: var(--muted); text-align: center; padding: 1px 0; }
+.vol .rocker { display: flex; border: 1px solid var(--key-line); border-radius: 14px; overflow: hidden; }
+.vol .rocker button { background: var(--key); border: 0; width: 56px; height: 48px; display: grid; place-items: center; }
+.vol .rocker button + button { border-left: 1px solid var(--key-line); }
+.vol .rocker svg { width: 20px; height: 20px; }
+
+/* ---------- aplikace ---------- */
+.apps { }
+.apps-head { position: absolute; top: 4px; right: 0; z-index: 4; display: flex; align-items: center; gap: 10px; }
+.zone.apps { min-height: 48px; }
+#apps-body > .app-grid, #apps-body > .empty, #apps-body > p { margin-right: 52px; }
+.apps-hint { display: flex; align-items: center; gap: 12px; margin: 0 52px 12px 0; }
+.apps-hint p { margin: 0; font-size: .88rem; flex: 1; }
+.apps-head .btn { padding: 7px 14px; font-weight: 400; }
+.apps-head .icon-btn { background: var(--key); border-color: var(--key-line); }
+.pop-wrap { position: relative; }
+.pop-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 220px; padding: 6px; display: grid;
+  border-radius: 14px; border: 1px solid var(--glass-edge, var(--line)); background: var(--surface); box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+.pop-menu.hidden { display: none; }
+.pop-menu button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-radius: 9px; background: none; color: var(--text); font: inherit; font-size: .95rem; cursor: pointer; }
+.pop-menu button.hidden { display: none; }
+.pop-menu button:hover, .pop-menu button:focus-visible { background: var(--key); outline: none; }
+.app-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+.app-tile { position: relative; display: grid; gap: 8px; justify-items: center; text-align: center; background: none; border: 0; padding: 6px 4px; border-radius: 16px; font-size: .88rem; }
+.app-tile img, .app-tile .app-fallback { width: 100%; aspect-ratio: 16 / 9; height: auto; border-radius: 12px; object-fit: cover; background: var(--key); border: 1px solid var(--key-line); }
+.app-tile .app-fallback { font-size: 1.4rem; }
+.app-tile span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.app-tile.is-hidden img, .app-tile.is-hidden .app-fallback { opacity: .3; }
+.app-tile.running img, .app-tile.running .app-fallback { outline: 2px solid rgb(var(--glow)); outline-offset: 2px; }
+.app-tile .eye { position: absolute; top: 0; right: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; }
+.app-tile .eye svg { width: 16px; height: 16px; }
+.app-grid.editing .app-tile { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: grab; }
+.app-tile.drag-placeholder { opacity: .25; }
+.app-ghost { position: fixed; z-index: 100; pointer-events: none; margin: 0; cursor: grabbing; opacity: .95;
+  filter: drop-shadow(0 14px 28px rgba(0,0,0,.45)); transition: none; }
+
+.empty { border: 1px dashed var(--key-line); border-radius: 18px; padding: 22px; color: var(--muted); }
+.empty p { margin: 0 0 12px; max-width: 60ch; }
+.empty .btn.ghost { color: var(--text); }
+
+/* ---------- dialogy ---------- */
+dialog { border: 1px solid var(--line); border-radius: 22px; background: var(--surface); color: var(--text); padding: 0; width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); }
+dialog::backdrop { background: rgba(5, 8, 18, .6); backdrop-filter: blur(3px); }
+.dlg-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.dlg-head h2 { font-size: 1.25rem; }
+.dlg-head .icon-btn { margin-left: auto; }
+.dlg-body { padding: 8px 20px 22px; }
+.dlg-body section { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.dlg-body section:last-child { border-bottom: 0; }
+.dlg-body h3 { font-size: 1.05rem; margin-bottom: 10px; }
+.dlg-body p.muted { margin-top: 0; }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0 0 14px; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+.field { display: grid; gap: 4px; margin-bottom: 10px; }
+.field label { font-size: .9rem; color: var(--muted); }
+.field input, .field-input, .auth input { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+.fields-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+.seg label { flex: 1; padding: 9px 10px; text-align: center; cursor: pointer; font-size: .92rem; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--surface-2); font-weight: 700; }
+.seg label + label { border-left: 1px solid var(--line); }
+.dlg-body .btn { background: var(--text); color: var(--bg); }
+.dlg-body .btn.ghost { background: transparent; color: var(--text); }
+.dlg-body .btn.danger { background: transparent; color: var(--bad); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+pre.log { white-space: pre-wrap; font-size: .8rem; background: var(--surface-2); border-radius: 10px; padding: 10px; max-height: 180px; overflow: auto; }
+.status-dot { display: inline-flex; align-items: center; gap: 8px; }
+.status-dot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.status-dot.ok::before { background: var(--good); }
+.status-dot.bad::before { background: var(--bad); }
+.status-dot.warn::before { background: var(--warn); }
+.dev-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.dev-list li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.dev-list .name { font-weight: 700; }
+.dev-list small { display: block; color: var(--muted); }
+.dev-list button { margin-left: auto; }
+.qr { display: grid; justify-items: center; gap: 8px; padding: 12px 0; }
+.qr svg { width: 220px; height: 220px; border-radius: 12px; }
+.qr-steps { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; align-items: flex-start; }
+.qr-step { display: grid; justify-items: center; gap: 10px; text-align: center; max-width: 260px; }
+.qr-step p { margin: 0; font-size: .9rem; }
+.qr-step .btn { padding: 8px 14px; text-decoration: none; }
+
+.pick-list { display: grid; gap: 8px; }
+.pick-list button { text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); font-size: 1.05rem; }
+
+/* ---------- klávesnice ---------- */
+#kbd-dlg { width: min(860px, calc(100vw - 16px)); }
+.kbd-field { display: flex; gap: 8px; margin-bottom: 14px; }
+.kbd-field input { flex: 1; min-width: 0; font-size: 1.15rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.keys { display: grid; gap: 8px; }
+.keys .krow { display: flex; gap: 6px; justify-content: center; }
+.key {
+  flex: 1 1 0; min-width: 0; max-width: 64px; height: 50px; border-radius: 25px; border: 0;
+  background: var(--surface-2); font-size: 1.1rem; display: grid; place-items: center;
+}
+.key.wide { max-width: 120px; flex-grow: 1.6; font-size: .92rem; }
+.key.space { max-width: 360px; flex-grow: 5; }
+.key.on { background: var(--text); color: var(--bg); }
+.key svg { width: 22px; height: 22px; }
+@media (max-width: 520px) { .key { height: 44px; font-size: 1rem; } .keys .krow { gap: 4px; } }
+.kbd-note { color: var(--muted); font-size: .88rem; margin-top: 12px; }
+
+/* ---------- přihlášení ---------- */
+.auth { max-width: 420px; margin: 16vh auto 0; padding: 0 16px; }
+.auth h1 { font-size: 2rem; margin-bottom: 8px; }
+.auth p { color: var(--muted); margin: 0 0 18px; }
+.auth .field input { font-size: 1.05rem; }
+.auth .btn { background: var(--text); color: var(--bg); margin-top: 6px; width: 100%; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px; max-width: calc(100vw - 32px); box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 10; }
+@media (prefers-reduced-motion: reduce) { .screen-area::before, .vol-osd { transition: none; } }
+
+/* ---------- verze, jazyky, návod ---------- */
+.ver { font-size: .8rem; color: var(--muted); font-weight: 400; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.langs { position: relative; }
+.lang-btn { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 8px 0 7px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: .8rem; font-weight: 700; letter-spacing: .04em; cursor: pointer; }
+.lang-btn svg.flag, .lang-menu svg.flag { width: 24px; height: 16px; border-radius: 3px; display: block; box-shadow: 0 0 0 1px rgba(0,0,0,.18); flex: none; }
+.lang-btn .chev { width: 12px; height: 12px; opacity: .6; transition: transform .15s; }
+.lang-btn[aria-expanded=true] .chev { transform: rotate(180deg); }
+.lang-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; min-width: 200px; max-height: min(80vh, 600px); overflow-y: auto; padding: 6px; margin: 0; list-style: none;
+  border-radius: 14px; border: 1px solid var(--glass-edge, var(--line)); background: var(--surface); box-shadow: 0 18px 50px rgba(0,0,0,.35); backdrop-filter: blur(18px); }
+.lang-menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-radius: 9px; background: none; color: var(--text); font: inherit; font-size: .92rem; text-align: left; cursor: pointer; }
+.lang-menu button:hover, .lang-menu button:focus-visible { background: var(--key, rgba(127,127,127,.12)); outline: none; }
+.lang-menu button[aria-checked=true] { font-weight: 700; }
+.lang-menu button[aria-checked=true]::after { content: "✓"; margin-left: auto; color: var(--accent, currentColor); }
+.lang-menu .code { margin-left: auto; font-size: .72rem; color: var(--muted); letter-spacing: .05em; }
+.lang-menu button[aria-checked=true] .code { display: none; }
+.auth .langs { display: flex; justify-content: flex-end; margin-bottom: 18px; }
+details.guide { border: 1px solid var(--line); border-radius: 14px; padding: 0 14px; margin-bottom: 14px; }
+details.guide summary { cursor: pointer; padding: 12px 0; font-weight: 700; }
+details.guide ol { margin: 0 0 14px; padding-left: 22px; display: grid; gap: 8px; }
+details.guide li b { font-weight: 700; }
+details.guide .note { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
+.adb-result { margin: 10px 0 0; }
+.offline-pill { font-size: .85rem; color: var(--bad); border: 1px solid var(--bad); border-radius: 999px; padding: 3px 10px; }
+.icon-btn.new { position: relative; border-color: rgb(var(--glow)); }
+.icon-btn.new::after { content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: var(--good); }
+.icon-btn.new svg { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.85); } }
+@media (prefers-reduced-motion: reduce) { .icon-btn.new svg { animation: none; } }
+.found-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.found-list li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; }
+.found-list .name { font-weight: 700; }
+.found-list small { display: block; color: var(--muted); }
+.found-list .btn { margin-left: auto; }
+</style>
+</head>
+<body>
+
+<!-- přihlášení / první nastavení -->
+<div id="auth" class="auth hidden">
+  <div class="langs" data-langs></div>
+  <h1 id="auth-title"></h1>
+  <p id="auth-text"></p>
+  <form id="auth-form">
+    <div class="field">
+      <label for="auth-pw" id="auth-pw-label"></label>
+      <input id="auth-pw" type="password" autocomplete="current-password" required minlength="8">
+    </div>
+    <div class="field hidden" id="auth-pw2-wrap">
+      <label for="auth-pw2" data-i18n="auth.pw2"></label>
+      <input id="auth-pw2" type="password" autocomplete="new-password" minlength="8">
+    </div>
+    <div id="auth-err" class="err"></div>
+    <button class="btn" type="submit" id="auth-submit"></button>
+  </form>
+</div>
+
+<div id="app" class="wrap hidden">
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="top">
+    <h1 id="brand"><img src="/icons/icon.svg" alt="" width="28" height="28"><span class="brand-text"><span>Homemote</span><small>for Google TV</small></span></h1>
+    <div class="top-right">
+      <div class="langs" data-langs></div>
+      <span id="offline" class="offline-pill hidden" data-i18n="live.off"></span>
+      <button class="icon-btn" id="open-add" data-i18n-aria="add.title" data-i18n-title="add.title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="icon-btn" id="open-settings" data-i18n-aria="settings.title" data-i18n-title="settings.title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tabs hidden" id="tabs" role="tablist" data-i18n-aria="tabs.label"></nav>
+  <main class="slab" id="slab">
+  <div class="slab-head">
+    <div class="tv-head" id="tv-head"></div>
+    <div class="tv-meta" id="tv-meta"></div>
+    <button class="icon-btn" id="open-diag" data-i18n-aria="diag.open" data-i18n-title="diag.open"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+  </div>
+  <div class="zones" id="zones">
+    <section class="zone screen-area" data-zone="screen" data-i18n-aria="screen.label">
+      <button class="grip" data-grip data-i18n-aria="layout.move" data-i18n-title="layout.move"><svg viewBox="0 0 22 10" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.6"/><circle cx="11" cy="3" r="1.6"/><circle cx="19" cy="3" r="1.6"/><circle cx="3" cy="8" r="1.6"/><circle cx="11" cy="8" r="1.6"/><circle cx="19" cy="8" r="1.6"/></svg></button>
+      <div class="screen-box">
+        <div class="screen" id="screen"></div>
+        <button class="vol-ring hidden" id="vol-ring" data-i18n-aria="vol.ring">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="rgba(5,7,13,.72)"/>
+            <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="7" stroke-linecap="round" pathLength="360" stroke-dasharray="270 360" transform="rotate(135 50 50)"/>
+            <circle id="vol-arc" cx="50" cy="50" r="38" fill="none" stroke="#F2F4FA" stroke-width="7" stroke-linecap="round" pathLength="360" stroke-dasharray="0 360" transform="rotate(135 50 50)"/>
+          </svg>
+          <span class="num" id="vol-num"></span>
+        </button>
+        <div class="vol-osd" id="vol-osd" aria-hidden="true">
+          <div class="card">
+            <div class="dial">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="6" stroke-linecap="round" pathLength="360" stroke-dasharray="270 360" transform="rotate(135 50 50)"/>
+                <circle id="osd-arc" cx="50" cy="50" r="42" fill="none" stroke="#F2F4FA" stroke-width="6" stroke-linecap="round" pathLength="360" stroke-dasharray="0 360" transform="rotate(135 50 50)"/>
+              </svg>
+              <div class="big" id="osd-num"></div>
+            </div>
+            <div class="lbl" data-i18n="vol.label"></div>
+          </div>
+        </div>
+      </div>
+      <div class="transport" id="transport">
+        <button data-key="rewind" data-i18n-aria="key.rewind"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L2.5 12 11 6Zm9.5 0v12L12 12l8.5-6Z"/></svg></button>
+        <button data-key="play_pause" class="primary" data-i18n-aria="key.playpause"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4.5v15l8-7.5-8-7.5ZM15 5h2.5v14H15zM19.5 5H22v14h-2.5z"/></svg></button>
+        <button data-key="stop" data-i18n-aria="key.stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+        <button data-key="forward" data-i18n-aria="key.forward"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8.5-6L13 6ZM3.5 6v12L12 12 3.5 6Z"/></svg></button>
+      </div>
+    </section>
+
+    <section class="zone remote" data-zone="remote" id="remote" data-i18n-aria="remote.label">
+      <button class="grip" data-grip data-i18n-aria="layout.move" data-i18n-title="layout.move"><svg viewBox="0 0 22 10" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.6"/><circle cx="11" cy="3" r="1.6"/><circle cx="19" cy="3" r="1.6"/><circle cx="3" cy="8" r="1.6"/><circle cx="11" cy="8" r="1.6"/><circle cx="19" cy="8" r="1.6"/></svg></button>
+      <div class="remote-pane">
+      <div class="row">
+        <button class="rbtn" data-key="power" data-i18n-aria="key.power"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
+        <button class="rbtn" data-key="guide" data-i18n="key.guide"></button>
+        <button class="rbtn" data-key="settings" data-i18n-aria="key.tvsettings" data-i18n-title="key.tvsettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+      </div>
+      <div class="dpad">
+        <button class="up" data-key="up" data-repeat data-i18n-aria="key.up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg></button>
+        <button class="left" data-key="left" data-repeat data-i18n-aria="key.left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+        <button class="ok" data-key="ok" data-hold>OK</button>
+        <button class="right" data-key="right" data-repeat data-i18n-aria="key.right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button class="down" data-key="down" data-repeat data-i18n-aria="key.down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="row">
+        <button class="rbtn" data-key="back" data-i18n-aria="key.back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+        <button class="rbtn" data-key="home" data-i18n-aria="key.home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg></button>
+        <button class="rbtn" id="open-kbd" data-i18n-aria="kbd.open" data-i18n-title="kbd.open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/></svg></button>
+      </div>
+      <div class="vol">
+        <div class="rocker vert" role="group" data-i18n-aria="vol.label">
+          <button data-key="vol_up" data-repeat data-i18n-aria="key.volup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12M12 6v12"/></svg></button>
+          <span class="rlbl" aria-hidden="true">VOL</span>
+          <button data-key="vol_down" data-repeat data-i18n-aria="key.voldown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+        </div>
+        <div class="mid">
+          <button class="rbtn" data-key="mute" data-i18n-aria="key.mute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button>
+          <button class="rbtn" id="open-inputs" data-i18n="key.input" data-i18n-aria="key.inputlong"></button>
+        </div>
+        <div class="rocker vert" role="group" data-i18n-aria="ch.label">
+          <button data-key="ch_up" data-repeat data-i18n-aria="key.chup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12M12 6v12"/></svg></button>
+          <span class="rlbl" aria-hidden="true">CH</span>
+          <button data-key="ch_down" data-repeat data-i18n-aria="key.chdown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <section class="zone apps" data-zone="apps" data-i18n-aria="apps.title">
+      <button class="grip" data-grip data-i18n-aria="layout.move" data-i18n-title="layout.move"><svg viewBox="0 0 22 10" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.6"/><circle cx="11" cy="3" r="1.6"/><circle cx="19" cy="3" r="1.6"/><circle cx="3" cy="8" r="1.6"/><circle cx="11" cy="8" r="1.6"/><circle cx="19" cy="8" r="1.6"/></svg></button>
+      <div class="apps-head">
+        <div class="pop-wrap">
+          <button class="icon-btn hidden" type="button" id="apps-menu-btn" aria-haspopup="menu" aria-expanded="false" data-i18n-aria="apps.menu" data-i18n-title="apps.menu"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+          <div class="pop-menu hidden" id="apps-menu" role="menu">
+            <button type="button" role="menuitem" class="hidden" id="edit-apps" aria-pressed="false"></button>
+            <button type="button" role="menuitem" class="hidden" id="open-helper2" data-i18n="helper.title"></button>
+          </div>
+        </div>
+      </div>
+      <div id="apps-body"></div>
+    </section>
+  </div>
+  </main>
+  <footer class="foot"><span data-i18n="app.name"></span> <span id="ver"></span></footer>
+</div>
+
+<!-- nastavení -->
+<dialog id="settings" aria-labelledby="settings-title">
+  <div class="dlg-head">
+    <h2 id="settings-title" data-i18n="settings.title"></h2>
+    <button class="icon-btn" data-close data-i18n-aria="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <section>
+      <h3 data-i18n="conn.title"></h3>
+      <p class="muted" data-i18n="conn.intro"></p>
+      <form id="conn-form">
+        <div class="field"><label for="c-public" data-i18n="conn.public"></label><input id="c-public" placeholder="https://tv.example.com" inputmode="url"></div>
+        <div class="field"><label for="c-local" data-i18n="conn.local"></label><input id="c-local" inputmode="url"></div>
+        <button class="btn" type="submit" data-i18n="conn.save"></button>
+        <div id="conn-err" class="err"></div>
+      </form>
+    </section>
+    <section>
+      <h3 data-i18n="dev.title"></h3>
+      <ul class="dev-list" id="dev-list"></ul>
+      <div class="btn-row">
+        <button class="btn" id="add-phone" data-i18n="dev.addphone"></button>
+        <button class="btn ghost" id="logout" data-i18n="dev.logout"></button>
+      </div>
+      <div class="qr hidden" id="qr"></div>
+    </section>
+    <section>
+      <h3 data-i18n="pw.title"></h3>
+      <form id="pw-form">
+        <div class="fields-2">
+          <div class="field"><label for="pw-old" data-i18n="pw.old"></label><input id="pw-old" type="password" autocomplete="current-password" required></div>
+          <div class="field"><label for="pw-new" data-i18n="pw.new"></label><input id="pw-new" type="password" autocomplete="new-password" minlength="8" required></div>
+        </div>
+        <button class="btn" type="submit" data-i18n="pw.btn"></button>
+        <div id="pw-err" class="err"></div>
+      </form>
+    </section>
+    <section>
+      <p class="muted" style="margin:0" id="about"></p>
+    </section>
+  </div>
+</dialog>
+
+<!-- přidání zařízení -->
+<dialog id="add-dlg" aria-labelledby="add-title">
+  <div class="dlg-head">
+    <h2 id="add-title" data-i18n="add.title"></h2>
+    <button class="icon-btn" data-close data-i18n-aria="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <section>
+      <h3 data-i18n="add.found"></h3>
+      <ul class="found-list" id="found-list"></ul>
+    </section>
+    <section>
+      <h3 data-i18n="add.byIp"></h3>
+      <p class="muted" data-i18n="add.intro"></p>
+      <form id="add-form" class="inline-form">
+        <input id="add-host" class="field-input" data-i18n-ph="add.ph" data-i18n-aria="add.aria" style="flex:1;min-width:160px">
+        <button class="btn" type="submit" data-i18n="add.btn"></button>
+      </form>
+      <div id="add-err" class="err"></div>
+    </section>
+  </div>
+</dialog>
+
+<!-- pomocník na zařízení -->
+<dialog id="helper-dlg" aria-labelledby="helper-title">
+  <div class="dlg-head">
+    <h2 id="helper-title" data-i18n="helper.title"></h2>
+    <button class="icon-btn" data-close data-i18n-aria="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <section>
+      <p class="muted" style="margin-top:0" data-i18n="helper.intro"></p>
+      <div id="helper-status" style="margin-bottom:12px"></div>
+      <details class="guide" id="adb-guide">
+        <summary data-i18n="adb.guide"></summary>
+        <ol>
+          <li data-i18n-html="adb.s1"></li>
+          <li data-i18n-html="adb.s2"></li>
+          <li data-i18n-html="adb.s3"></li>
+          <li data-i18n-html="adb.s4"></li>
+          <li data-i18n-html="adb.s5"></li>
+        </ol>
+        <p class="note" data-i18n-html="adb.note"></p>
+      </details>
+      <form id="helper-form">
+        <div class="seg" role="radiogroup" data-i18n-aria="adb.mode">
+          <label><input type="radio" name="mode" value="classic" checked><span data-i18n="adb.classic"></span></label>
+          <label><input type="radio" name="mode" value="wireless"><span data-i18n="adb.wireless"></span></label>
+        </div>
+        <div class="fields-2">
+          <div class="field"><label for="h-connect" data-i18n="adb.cport"></label><input id="h-connect" inputmode="numeric" value="5555"></div>
+          <div class="field wireless hidden"><label for="h-pport" data-i18n="adb.pport"></label><input id="h-pport" inputmode="numeric"></div>
+        </div>
+        <div class="field wireless hidden"><label for="h-pcode" data-i18n="adb.pcode"></label><input id="h-pcode" inputmode="numeric" autocomplete="off"></div>
+        <div class="btn-row">
+          <button class="btn ghost" type="button" id="adb-test" data-i18n="adb.test"></button>
+          <button class="btn" type="submit" id="helper-submit" data-i18n="helper.install"></button>
+          <button class="btn ghost" type="button" id="helper-retry" data-i18n="helper.retry"></button>
+        </div>
+        <div id="adb-result" class="adb-result"></div>
+        <div id="helper-err" class="err"></div>
+        <pre id="helper-log" class="log hidden"></pre>
+      </form>
+    </section>
+  </div>
+</dialog>
+
+<!-- diagnostika zařízení -->
+<dialog id="diag-dlg" aria-labelledby="diag-title">
+  <div class="dlg-head">
+    <h2 id="diag-title" data-i18n="diag.title"></h2>
+    <button class="icon-btn" data-close data-i18n-aria="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <section id="set-tv"></section>
+    <section>
+      <h3 data-i18n="diag.log"></h3>
+      <p class="muted" data-i18n="diag.intro"></p>
+      <div class="inline-form" style="margin-bottom:10px">
+        <input id="log-q" class="field-input" data-i18n-ph="diag.ph" data-i18n-aria="diag.ph" style="flex:1;min-width:140px">
+        <button class="btn ghost" type="button" id="log-load" data-i18n="diag.load"></button>
+        <button class="btn ghost" type="button" id="log-copy" data-i18n="diag.copy"></button>
+        <button class="btn ghost" type="button" id="ui-dump" data-i18n="diag.ui" data-i18n-title="diag.uiTitle"></button>
+      </div>
+      <pre id="log-box" class="log" style="max-height:280px"></pre>
+    </section>
+  </div>
+</dialog>
+
+<!-- výběr vstupu -->
+<dialog id="inputs-dlg" aria-labelledby="inputs-title">
+  <div class="dlg-head">
+    <h2 id="inputs-title" data-i18n="key.input"></h2>
+    <button class="icon-btn" data-close data-i18n-aria="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="dlg-body"><div class="pick-list" id="inputs-list"></div></div>
+</dialog>
+
+<!-- klávesnice -->
+<dialog id="kbd-dlg" aria-labelledby="kbd-title">
+  <div class="dlg-head">
+    <h2 id="kbd-title"></h2>
+    <button class="icon-btn" data-close data-i18n-aria="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <div class="kbd-field">
+      <input id="kbd-input" autocomplete="off" autocorrect="off" spellcheck="false" data-i18n-ph="kbd.ph" data-i18n-aria="kbd.aria">
+    </div>
+    <div class="keys" id="keys"></div>
+  </div>
+</dialog>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
+};
+/* Aplikace pro telefon předá token z párování v URL (#hm_token=…); uložit a z adresy odstranit. */
+(() => {
+  const m = /[#&]hm_token=([^&]+)/.exec(location.hash);
+  if (!m) return;
+  try { store.set("hm.token", decodeURIComponent(m[1])); } catch {}
+  history.replaceState(null, "", location.pathname + location.search);
+})();
+
+/* ================= překlady ================= */
+const I18N = {
+  cs: {
+    "app.name": "Homemote", "live.title": "Živé spojení s backendem", "live.ok": "Živě", "live.off": "Spojení s backendem přerušeno", "live.connecting": "Připojuji…",
+    "close": "Zavřít", "settings.title": "Nastavení", "tabs.label": "Zařízení", "screen.label": "Obrazovka", "remote.label": "Ovladač",
+    "auth.welcome": "Vítejte", "auth.setupText": "Nastavte heslo k ovladači. Budete ho potřebovat pro přihlášení telefonu a dalších prohlížečů.",
+    "auth.loginText": "Přihlaste se heslem. Tento prohlížeč si přihlášení zapamatuje.", "auth.pw": "Heslo", "auth.pwNew": "Nové heslo (aspoň 8 znaků)",
+    "auth.pw2": "Heslo znovu", "auth.login": "Přihlásit", "auth.setup": "Nastavit heslo", "auth.mismatch": "Hesla se neshodují.",
+    "auth.noSetupTitle": "Nastavení hesla", "auth.noSetupText": "Heslo zatím není nastavené. Z bezpečnostních důvodů ho lze nastavit jen z domácí sítě. Otevřete tuto stránku na adrese backendu ve vaší síti.",
+    "tv.none": "Žádné zařízení", "tv.rename": "Poklepáním přejmenujete", "tv.reorder": "přetažením změníte pořadí", "tv.nameAria": "Název zařízení", "save": "Uložit", "cancel": "Zrušit",
+    "state.unpaired": "Nespárované", "state.offline": "Nedostupné", "state.standby": "V pohotovosti", "state.on": "Zapnuté",
+    "state.connected": "Připojené", "state.connectedStandby": "Připojené, v pohotovosti",
+    "scr.searchTitle": "Zatím žádné zařízení", "scr.searchText": "Klepněte nahoře na + a přidejte zařízení s Google TV nebo Android TV. Když backend najde nové zařízení, tlačítko + bliká.",
+    "scr.pairCodeTitle": "Zadejte kód z obrazovky", "scr.pairCodeText": "Kód má šest znaků a zobrazuje se právě teď na obrazovce zařízení.",
+    "scr.unpairedTitle": "Zařízení ještě není spárované", "scr.unpairedText": "Nalezeno na adrese {host}. Spárování proběhne jen jednou.",
+    "scr.pairStart": "Spárovat", "scr.pairConfirm": "Potvrdit kód", "scr.pairAgain": "Poslat nový kód", "scr.codeAria": "Kód z obrazovky",
+    "scr.pairFailed": "{err}. Spusťte párování znovu.", "scr.paired": "Zařízení je spárované",
+    "scr.offTitle": "Zařízení je vypnuté nebo nedostupné", "scr.offText": "Jakmile se objeví v síti, připojí se znovu sama.",
+    "scr.standbyTitle": "Zařízení je v pohotovosti", "scr.standbyText": "Zapnout ji můžete tlačítkem napájení.", "scr.powerOn": "Zapnout", "scr.wake": "Zkusit probudit",
+    "wake.sent": "Posláno probuzení (Wake-on-LAN). Pokud se zařízení nezapne, povolte na něm zapnutí přes Wi-Fi (Philips: Nastavení → Síť a internet → WoWLAN).",
+    "scr.home": "Domovská obrazovka", "scr.nothing": "Nic se právě nepřehrává.", "scr.needHelper": "Podrobnosti o přehrávání ukáže pomocník na zařízení.",
+    "scr.noSeek": "Tato aplikace přeskakování na čas nepodporuje. Použijte tlačítka přetáčení.", "scr.seekAria": "Pozice přehrávání",
+    "vol.label": "Hlasitost", "vol.muted": "Ztlumeno", "vol.ring": "Hlasitost – táhněte po kolečku, klepnutím ztlumíte",
+    "key.rewind": "Přetočit zpět", "key.playpause": "Přehrát / pozastavit", "key.play": "Přehrát", "key.pause": "Pozastavit", "key.stop": "Zastavit", "key.forward": "Přetočit vpřed",
+    "key.power": "Zapnout / vypnout", "key.guide": "Průvodce", "key.tvsettings": "Nastavení zařízení (Android)", "key.up": "Nahoru", "key.down": "Dolů", "key.left": "Doleva", "key.right": "Doprava",
+    "key.back": "Zpět", "key.home": "Domů", "key.mute": "Ztlumit", "key.voldown": "Tišeji", "key.volup": "Hlasitěji", "key.input": "Vstup", "key.inputlong": "Vstup (zdroj signálu)",
+    "apps.title": "Aplikace", "apps.edit": "Upravit", "apps.done": "Hotovo", "apps.afterPair": "Aplikace se zobrazí po spárování zařízení.",
+    "apps.needHelper": "Pro seznam aplikací, spouštění, posuvník přehrávání a výběr vstupu je potřeba pomocník na zařízení. Instalace zabere pár minut.",
+    "apps.installHelper": "Nainstalovat pomocníka", "apps.loading": "Načítám aplikace…", "apps.loadFailed": "Seznam aplikací se nepodařilo načíst: {err}",
+    "apps.allHidden": "Všechny aplikace jsou skryté. Klepněte na Upravit a vyberte, které se mají zobrazovat.",
+    "apps.show": "Zobrazit {name}", "apps.hide": "Skrýt {name}", "apps.launch": "Spustit {name}", "apps.launching": "Spouštím {name}",
+    "inputs.loading": "Načítám vstupy…", "inputs.none": "Zařízení nehlásí žádné vstupy.", "inputs.switching": "Přepínám na {name}",
+    "kbd.open": "Klávesnice", "kbd.title": "Psaní na zařízení", "kbd.ph": "Pište sem – text se hned objevuje na obrazovce", "kbd.aria": "Text pro zařízení",
+    "kbd.note": "Text jde do pole, které je právě vybrané na zařízení. Když na zařízení otevřete vyhledávání nebo jiné textové pole, tato klávesnice se otevře sama.",
+    "kbd.shift": "Velká písmena", "kbd.del": "Smazat", "kbd.space": "Mezera", "kbd.done": "Hotovo",
+    "set.tv": "Zařízení", "set.noTv": "Žádné zařízení není vybrané.", "set.name": "Název", "set.vendor": "Výrobce", "set.model": "Model", "set.system": "Systém",
+    "set.ip": "IP adresa", "set.mac": "MAC", "set.state": "Stav", "set.remove": "Odebrat zařízení",
+    "set.removeNote": "Smaže párování, název a skryté aplikace. Zapnuté zařízení se pak znovu objeví mezi nalezenými (+).",
+    "set.removeConfirm": "Odebrat zařízení „{name}“ z ovladače?", "set.removed": "Zařízení odebráno",
+    "helper.title": "Pomocník na zařízení", "helper.intro": "Pomocník je malá aplikace na zařízení s Google TV. Díky němu uvidíte seznam aplikací, co právě běží, posuvník přehrávání a výběr vstupu a tlačítko nastavení otevře Nastavení Androidu. Instaluje se jednou přes ladění ADB, které pak můžete zase vypnout.",
+    "helper.running": "Pomocník běží", "helper.version": " (verze {v})", "helper.noListener": ". Chybí přístup k notifikacím, přeinstalujte.",
+    "helper.notConnected": "Pomocník není připojený", "helper.install": "Nainstalovat pomocníka", "helper.installing": "Instaluji… potvrďte případný dotaz na obrazovce",
+    "helper.retry": "Zkusit se připojit", "helper.installed": "Pomocník je nainstalovaný", "helper.installedNoReply": "Nainstalováno, ale pomocník zatím neodpovídá",
+    "helper.connected": "Pomocník připojen", "helper.noReply": "Pomocník neodpovídá",
+    "adb.guide": "Jak na zařízení zapnout ladění ADB",
+    "adb.s1": "Na zařízení otevřete <b>Nastavení → Systém → Informace</b>.",
+    "adb.s2": "Najeďte na položku <b>Sestavení OS Android TV</b> (Android TV OS build) a sedmkrát rychle za sebou stiskněte OK. Zařízení ohlásí, že jste vývojář. Pozor, ne na položku s verzí Androidu.",
+    "adb.s3": "Vraťte se do <b>Nastavení → Systém</b>. Přibyla položka <b>Pro vývojáře</b> (Developer options).",
+    "adb.s4": "V ní zapněte <b>Ladění USB</b> (USB debugging). Pokud tam je samostatná volba <b>Ladění přes síť</b> nebo <b>Bezdrátové ladění</b>, zapněte i ji.",
+    "adb.s5": "Zde vyberte typ ladění a klepněte na <b>Otestovat připojení ADB</b>. Při <b>Ladění přes síť</b> potvrďte na obrazovce dotaz na povolení ladění a zaškrtněte, ať se příště neptá. Při <b>Bezdrátovém ladění</b> otevřete na zařízení Bezdrátové ladění → Spárovat zařízení pomocí párovacího kódu a opište sem port pro párování a kód. Port pro připojení je uvedený u IP adresy.",
+    "adb.note": "Přesné názvy položek se mohou podle výrobce mírně lišit. Po instalaci pomocníka můžete ladění zase vypnout.",
+    "adb.mode": "Typ ladění", "adb.classic": "Ladění přes síť", "adb.wireless": "Bezdrátové ladění (kód)",
+    "adb.cport": "Port pro připojení", "adb.pport": "Port pro párování", "adb.pcode": "Párovací kód z obrazovky",
+    "adb.test": "Otestovat připojení ADB", "adb.testing": "Připojuji… potvrďte případný dotaz na obrazovce", "adb.ok": "ADB funguje: {model}, Android {android}",
+    "add.title": "Přidat zařízení", "add.intro": "Když se zařízení neobjeví samo. Dál ho pak backend pozná i po změně IP.",
+    "add.ph": "např. 192.168.1.50", "add.aria": "IP adresa zařízení", "add.btn": "Přidat", "add.done": "Přidáno: {name}",
+    "conn.title": "Adresy backendu", "conn.intro": "Telefon se doma připojí na adresu v domácí síti, jinde přes adresu z internetu (reverzní proxy).",
+    "conn.public": "Adresa z internetu", "conn.local": "Adresa v domácí síti", "conn.save": "Uložit adresy", "conn.saved": "Adresy uloženy", "conn.auto": "{url} (automaticky)",
+    "dev.title": "Přihlášené telefony a prohlížeče", "dev.addphone": "Přidat telefon", "dev.logout": "Odhlásit tento prohlížeč", "dev.this": "Tento prohlížeč",
+    "dev.last": "Naposledy {when}", "dev.revoke": "Odhlásit", "dev.qr": "Naskenujte v aplikaci Homemote. Kód platí 5 minut a jde použít jednou.",
+    "diag.title": "Nastavení zařízení", "diag.intro": "Poslední záznamy z backendu. Pro psaní zadejte do filtru „IME“.", "diag.ph": "Filtr, např. IME",
+    "diag.load": "Načíst", "diag.copy": "Kopírovat", "diag.empty": "Žádné záznamy.", "diag.hint": "Klepněte na Načíst.", "diag.copied": "Zkopírováno",
+    "diag.copyFailed": "Kopírování prohlížeč nepovolil – označte text ručně",
+    "pw.title": "Změna hesla", "pw.old": "Současné heslo", "pw.new": "Nové heslo", "pw.btn": "Změnit heslo", "pw.done": "Heslo změněno",
+    "about": "Homemote, verze backendu {v}",
+    "add.found": "Nalezená zařízení",
+    "add.none": "V síti zatím není žádné nové zařízení. Zařízení musí být zapnuté a ve stejné síti.",
+    "add.byIp": "Zadat IP adresu",
+    "add.adopt": "Přidat",
+    "diag.open": "Nastavení zařízení",
+    "diag.log": "Záznamy backendu",
+    "settings.viaKey": "Pokud se nastavení neotevřelo: zařízení klávesu ignoruje. Pomůže ověřené ADB nebo pomocník na zařízení.",
+    "layout.move": "Přetažením přesunete na jiné místo",
+    "kbd.keys": "Psát přes ADB jako klávesnice v aplikaci {app}",
+    "kbd.keysNote": "Pro aplikace s vlastní klávesnicí na obrazovce (např. Oneplay, Prima+), které běžné psaní nepřijímají. Diakritika se odešle bez háčků a čárek.",
+    "kbd.keysNeedAdb": "Vyžaduje ověřené ADB – otestujte ho u pomocníka na zařízení (Aplikace).",
+    "kbd.keysFailed": "Psaní přes ADB selhalo: {err}",
+    "kbd.keysOn": "{app}: psaní přes ADB", "kbd.keysOff": "{app}: běžné psaní",
+    "kbd.noFocus": "Na klávesnici aplikace jsem nenašel zvýrazněnou klávesu. Vyberte na TV ovladačem některé písmeno a pište znovu.",
+    "apps.editHint": "Přetažením změníte pořadí (na telefonu dlaždici nejdřív podržte). Klepnutím aplikaci skryjete nebo zobrazíte.",
+    "key.chup": "Další kanál", "key.chdown": "Předchozí kanál", "ch.label": "Kanály", "apps.menu": "Možnosti aplikací",
+    "android.building": "Aplikace pro Android se připravují – sestavení po instalaci nebo aktualizaci trvá pár minut.", "android.error": "Sestavení aplikací pro Android selhalo: {err}",
+    "dev.step1": "1. Nainstalujte aplikaci", "dev.step1Text": "Naskenujte fotoaparátem telefonu a stáhněte Homemote pro Android. Android se zeptá, jestli povolit instalaci z prohlížeče.", "dev.download": "Stáhnout APK", "dev.step2": "2. Přihlaste aplikaci",
+    "diag.ui": "Rozložení obrazovky", "diag.uiTitle": "Načte přes ADB prvky na obrazovce zařízení (uiautomator) – pro diagnostiku aplikací s vlastní klávesnicí", "diag.uiLoading": "Čtu rozložení obrazovky…",
+  },
+  en: {
+    "app.name": "Homemote", "live.title": "Live connection to the backend", "live.ok": "Live", "live.off": "Connection to the backend lost", "live.connecting": "Connecting…",
+    "close": "Close", "settings.title": "Settings", "tabs.label": "Devices", "screen.label": "Screen", "remote.label": "Remote",
+    "auth.welcome": "Welcome", "auth.setupText": "Set a password for the remote. You'll need it to sign in your phone and other browsers.",
+    "auth.loginText": "Sign in with your password. This browser will remember you.", "auth.pw": "Password", "auth.pwNew": "New password (at least 8 characters)",
+    "auth.pw2": "Repeat password", "auth.login": "Sign in", "auth.setup": "Set password", "auth.mismatch": "The passwords don't match.",
+    "auth.noSetupTitle": "Set a password", "auth.noSetupText": "No password is set yet. For security it can only be set from the home network. Open this page at the backend's address in your network.",
+    "tv.none": "No device", "tv.rename": "Double-click to rename", "tv.reorder": "drag to reorder", "tv.nameAria": "Device name", "save": "Save", "cancel": "Cancel",
+    "state.unpaired": "Not paired", "state.offline": "Unreachable", "state.standby": "Standby", "state.on": "On",
+    "state.connected": "Connected", "state.connectedStandby": "Connected, standby",
+    "scr.searchTitle": "No device yet", "scr.searchText": "Tap + at the top to add a Google TV or Android TV device. It blinks when the backend finds a new device.",
+    "scr.pairCodeTitle": "Enter the code from the screen", "scr.pairCodeText": "The code has six characters and is on the device's screen right now.",
+    "scr.unpairedTitle": "This device isn't paired yet", "scr.unpairedText": "Found at {host}. You only need to pair once.",
+    "scr.pairStart": "Pair", "scr.pairConfirm": "Confirm code", "scr.pairAgain": "Send a new code", "scr.codeAria": "Code from the screen",
+    "scr.pairFailed": "{err}. Start pairing again.", "scr.paired": "The device is paired",
+    "scr.offTitle": "The device is off or unreachable", "scr.offText": "It reconnects by itself as soon as it's back on the network.",
+    "scr.standbyTitle": "The device is in standby", "scr.standbyText": "You can turn it on with the power button.", "scr.powerOn": "Turn on", "scr.wake": "Try to wake",
+    "wake.sent": "Wake-on-LAN sent. If the device doesn't turn on, enable switching on via Wi-Fi on it (Philips: Settings → Network and Internet → WoWLAN).",
+    "scr.home": "Home screen", "scr.nothing": "Nothing is playing.", "scr.needHelper": "Playback details come from the device helper.",
+    "scr.noSeek": "This app doesn't support jumping to a time. Use the rewind and forward buttons.", "scr.seekAria": "Playback position",
+    "vol.label": "Volume", "vol.muted": "Muted", "vol.ring": "Volume – drag around the dial, tap to mute",
+    "key.rewind": "Rewind", "key.playpause": "Play / pause", "key.play": "Play", "key.pause": "Pause", "key.stop": "Stop", "key.forward": "Fast forward",
+    "key.power": "Power", "key.guide": "Guide", "key.tvsettings": "Device settings (Android)", "key.up": "Up", "key.down": "Down", "key.left": "Left", "key.right": "Right",
+    "key.back": "Back", "key.home": "Home", "key.mute": "Mute", "key.voldown": "Volume down", "key.volup": "Volume up", "key.input": "Input", "key.inputlong": "Input (signal source)",
+    "apps.title": "Apps", "apps.edit": "Edit", "apps.done": "Done", "apps.afterPair": "Apps appear once the device is paired.",
+    "apps.needHelper": "The app list, launching, the playback slider and input selection need the device helper. Installing it takes a few minutes.",
+    "apps.installHelper": "Install the helper", "apps.loading": "Loading apps…", "apps.loadFailed": "Couldn't load the app list: {err}",
+    "apps.allHidden": "All apps are hidden. Tap Edit and choose which ones to show.",
+    "apps.show": "Show {name}", "apps.hide": "Hide {name}", "apps.launch": "Open {name}", "apps.launching": "Opening {name}",
+    "inputs.loading": "Loading inputs…", "inputs.none": "The device reports no inputs.", "inputs.switching": "Switching to {name}",
+    "kbd.open": "Keyboard", "kbd.title": "Type on device", "kbd.ph": "Type here – text appears on the screen right away", "kbd.aria": "Text for the device",
+    "kbd.note": "Text goes into the field that's selected on the device. When you open search or another text field on the device, this keyboard opens by itself.",
+    "kbd.shift": "Capital letters", "kbd.del": "Delete", "kbd.space": "Space", "kbd.done": "Done",
+    "set.tv": "Device", "set.noTv": "No device selected.", "set.name": "Name", "set.vendor": "Manufacturer", "set.model": "Model", "set.system": "System",
+    "set.ip": "IP address", "set.mac": "MAC", "set.state": "Status", "set.remove": "Remove device",
+    "set.removeNote": "Deletes pairing, name and hidden apps. If the device is on, it shows up again among found devices (+).",
+    "set.removeConfirm": "Remove the device “{name}” from the remote?", "set.removed": "Device removed",
+    "helper.title": "Device helper", "helper.intro": "The helper is a small app on the Google TV device. It shows the app list, what's playing, the playback slider and input selection, and lets the settings button open Android Settings. It's installed once over ADB debugging, which you can turn off again afterwards.",
+    "helper.running": "The helper is running", "helper.version": " (version {v})", "helper.noListener": ". Notification access is missing, reinstall it.",
+    "helper.notConnected": "The helper isn't connected", "helper.install": "Install the helper", "helper.installing": "Installing… confirm any prompt on the screen",
+    "helper.retry": "Try to connect", "helper.installed": "The helper is installed", "helper.installedNoReply": "Installed, but the helper isn't responding yet",
+    "helper.connected": "Helper connected", "helper.noReply": "The helper isn't responding",
+    "adb.guide": "How to turn on ADB debugging on the device",
+    "adb.s1": "On the device open <b>Settings → System → About</b>.",
+    "adb.s2": "Highlight <b>Android TV OS build</b> and press OK seven times quickly. The device tells you that you're now a developer. Not the Android version item.",
+    "adb.s3": "Go back to <b>Settings → System</b>. A new <b>Developer options</b> item is there.",
+    "adb.s4": "Turn on <b>USB debugging</b> in it. If there is a separate <b>Network debugging</b> or <b>Wireless debugging</b> option, turn it on too.",
+    "adb.s5": "Choose the debugging type here and tap <b>Test ADB connection</b>. With <b>Network debugging</b>, allow debugging in the prompt on the screen and tick “always allow”. With <b>Wireless debugging</b>, open Wireless debugging → Pair device with pairing code on the device and copy the pairing port and code here. The connection port is shown next to the IP address.",
+    "adb.note": "Exact menu names can differ slightly between makers. You can turn debugging off again after the helper is installed.",
+    "adb.mode": "Debugging type", "adb.classic": "Network debugging", "adb.wireless": "Wireless debugging (code)",
+    "adb.cport": "Connection port", "adb.pport": "Pairing port", "adb.pcode": "Pairing code from the screen",
+    "adb.test": "Test ADB connection", "adb.testing": "Connecting… confirm any prompt on the screen", "adb.ok": "ADB works: {model}, Android {android}",
+    "add.title": "Add device", "add.intro": "If the device doesn't show up by itself. After that the backend recognizes it even when its IP changes.",
+    "add.ph": "e.g. 192.168.1.50", "add.aria": "Device IP address", "add.btn": "Add", "add.done": "Added: {name}",
+    "conn.title": "Backend addresses", "conn.intro": "At home the phone connects to the home network address, elsewhere through the internet address (reverse proxy).",
+    "conn.public": "Internet address", "conn.local": "Home network address", "conn.save": "Save addresses", "conn.saved": "Addresses saved", "conn.auto": "{url} (automatic)",
+    "dev.title": "Signed-in phones and browsers", "dev.addphone": "Add a phone", "dev.logout": "Sign out this browser", "dev.this": "This browser",
+    "dev.last": "Last seen {when}", "dev.revoke": "Sign out", "dev.qr": "Scan in the Homemote app. The code is valid for 5 minutes and works once.",
+    "diag.title": "Device settings", "diag.intro": "Latest backend log entries. For typing, filter by “IME”.", "diag.ph": "Filter, e.g. IME",
+    "diag.load": "Load", "diag.copy": "Copy", "diag.empty": "No entries.", "diag.hint": "Tap Load.", "diag.copied": "Copied",
+    "diag.copyFailed": "The browser blocked copying – select the text manually",
+    "pw.title": "Change password", "pw.old": "Current password", "pw.new": "New password", "pw.btn": "Change password", "pw.done": "Password changed",
+    "about": "Homemote, backend version {v}",
+    "add.found": "Found devices",
+    "add.none": "No new device on the network yet. It has to be on and in the same network.",
+    "add.byIp": "Enter an IP address",
+    "add.adopt": "Add",
+    "diag.open": "Device settings",
+    "diag.log": "Backend log",
+    "settings.viaKey": "If Settings didn't open: the device ignores the key. A verified ADB connection or the device helper fixes that.",
+    "layout.move": "Drag to move",
+    "kbd.keys": "Type over ADB as a keyboard in {app}",
+    "kbd.keysNote": "For apps with their own on-screen keyboard (e.g. Oneplay, Prima+) that ignore normal typing. Accented letters are sent without accents.",
+    "kbd.keysNeedAdb": "Needs a verified ADB connection – test it in the device helper (Apps).",
+    "kbd.keysFailed": "Typing over ADB failed: {err}",
+    "kbd.keysOn": "{app}: typing over ADB", "kbd.keysOff": "{app}: normal typing",
+    "kbd.noFocus": "Couldn't find the highlighted key on the app's keyboard. Select any letter on the TV with the remote and type again.",
+    "apps.editHint": "Drag to reorder (on a phone, press and hold the tile first). Tap to hide or show an app.",
+    "key.chup": "Channel up", "key.chdown": "Channel down", "ch.label": "Channels", "apps.menu": "App options",
+    "android.building": "The Android apps are being prepared – building after an install or update takes a few minutes.", "android.error": "Building the Android apps failed: {err}",
+    "dev.step1": "1. Install the app", "dev.step1Text": "Scan with the phone camera and download Homemote for Android. Android will ask whether to allow installing from the browser.", "dev.download": "Download APK", "dev.step2": "2. Sign in the app",
+    "diag.ui": "Screen layout", "diag.uiTitle": "Reads the elements on the device screen over ADB (uiautomator) – for diagnosing apps with their own keyboard", "diag.uiLoading": "Reading the screen layout…",
+  },
+};
+const FLAGS = {
+  cs: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#D7141A"/><path d="M0 0 15 10 0 20z" fill="#11457E"/></svg>',
+  de: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="7" fill="#000"/><rect y="7" width="30" height="6" fill="#DD0000"/><rect y="13" width="30" height="7" fill="#FFCE00"/></svg>',
+  en: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#012169"/><path d="M0 0l30 20M30 0 0 20" stroke="#fff" stroke-width="4"/><path d="M0 0l30 20M30 0 0 20" stroke="#C8102E" stroke-width="1.6"/><path d="M15 0v20M0 10h30" stroke="#fff" stroke-width="6"/><path d="M15 0v20M0 10h30" stroke="#C8102E" stroke-width="3.4"/></svg>',
+  es: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#AA151B"/><rect y="5" width="30" height="10" fill="#F1BF00"/></svg>',
+  fr: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#002395"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ED2939"/></svg>',
+  it: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#CE2B37"/></svg>',
+  nl: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="7" fill="#AE1C28"/><rect y="7" width="30" height="6" fill="#fff"/><rect y="13" width="30" height="7" fill="#21468B"/></svg>',
+  pl: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#DC143C"/></svg>',
+  pt: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#FF0000"/><rect width="12" height="20" fill="#006600"/><circle cx="12" cy="10" r="4.2" fill="none" stroke="#FFCC00" stroke-width="1.6"/><path d="M10.4 7.6h3.2v3.4a1.6 1.6 0 0 1-3.2 0z" fill="#fff" stroke="#FF0000" stroke-width=".7"/></svg>',
+  sk: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="7" fill="#fff"/><rect y="7" width="30" height="6" fill="#0B4EA2"/><rect y="13" width="30" height="7" fill="#EE1C25"/><path d="M6.5 4.5h7v6.5c0 2.6-1.9 4.1-3.5 5-1.6-.9-3.5-2.4-3.5-5z" fill="#EE1C25" stroke="#fff" stroke-width=".8"/><path d="M10 6.2v7M8.1 8.2h3.8M7.6 10.3h4.8" stroke="#fff" stroke-width=".9"/></svg>',
+  uk: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#0057B7"/><rect y="10" width="30" height="10" fill="#FFD700"/></svg>',
+  hi: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="7" fill="#FF9933"/><rect y="7" width="30" height="6" fill="#fff"/><rect y="13" width="30" height="7" fill="#138808"/><circle cx="15" cy="10" r="2.4" fill="none" stroke="#000080" stroke-width=".7"/><circle cx="15" cy="10" r=".6" fill="#000080"/></svg>',
+  zh: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#EE1C25"/><polygon points="5.00,2.00 5.67,4.07 7.85,4.07 6.09,5.35 6.76,7.43 5.00,6.15 3.24,7.43 3.91,5.35 2.15,4.07 4.33,4.07" fill="#FFDE00"/><polygon points="9.14,2.51 9.62,1.97 9.25,1.34 9.91,1.63 10.39,1.08 10.33,1.80 11.00,2.09 10.29,2.25 10.22,2.97 9.85,2.35" fill="#FFDE00"/><polygon points="11.01,4.14 11.66,3.82 11.56,3.10 12.07,3.62 12.72,3.30 12.38,3.95 12.88,4.47 12.17,4.34 11.83,4.99 11.73,4.27" fill="#FFDE00"/><polygon points="11.04,6.73 11.76,6.70 11.96,6.00 12.21,6.68 12.94,6.66 12.37,7.10 12.62,7.79 12.01,7.38 11.44,7.83 11.64,7.13" fill="#FFDE00"/><polygon points="9.22,8.38 9.90,8.63 10.35,8.06 10.32,8.79 11.00,9.05 10.30,9.24 10.26,9.96 9.87,9.36 9.16,9.55 9.62,8.98" fill="#FFDE00"/></svg>',
+  ja: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#BC002D"/></svg>',
+  ko: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><path d="M10 10a5 5 0 0 1 10 0z" fill="#CD2E3A"/><path d="M10 10a5 5 0 0 0 10 0z" fill="#0047A0"/><circle cx="12.5" cy="10" r="2.5" fill="#CD2E3A"/><circle cx="17.5" cy="10" r="2.5" fill="#0047A0"/><g stroke="#000" stroke-width="1.1"><path d="M4 5.5l2.5-3.2M5.3 6.4l2.5-3.2M6.6 7.3l2.5-3.2"/><path d="M21 4.1l2.5 3.2M22.3 3.2l2.5 3.2M23.6 2.3l2.5 3.2"/><path d="M4 14.5l2.5 3.2M5.3 13.6l2.5 3.2M6.6 12.7l2.5 3.2"/><path d="M21 15.9l2.5-3.2M22.3 16.8l2.5-3.2M23.6 17.7l2.5-3.2"/></g></svg>',
+};
+const LANGS = [["cs", "Čeština"], ["de", "Deutsch"], ["en", "English"], ["es", "Español"], ["fr", "Français"], ["it", "Italiano"], ["nl", "Nederlands"], ["pl", "Polski"], ["pt", "Português"], ["sk", "Slovenčina"], ["uk", "Українська"], ["hi", "हिन्दी"], ["zh", "中文"], ["ja", "日本語"], ["ko", "한국어"]];
+const LANG_CODES = LANGS.map(l => l[0]);
+let LANG = (() => {
+  const saved = store.get("hm.lang"); if (LANG_CODES.includes(saved)) return saved;
+  for (const n of (navigator.languages || [navigator.language || ""])) { const c = n.toLowerCase().split("-")[0]; if (LANG_CODES.includes(c)) return c; }
+  return "en";
+})();
+async function loadLang(code) {
+  if (I18N[code]) return true;
+  try { const r = await fetch(`/i18n/${code}.json`, { cache: "no-cache" }); if (!r.ok) return false; I18N[code] = (await r.json()).ui; return true; }
+  catch { return false; }
+}
+function t(key, p = {}) {
+  const s = (I18N[LANG] && I18N[LANG][key]) ?? I18N.en[key] ?? I18N.cs[key] ?? key;
+  return s.replace(/\{(\w+)\}/g, (_, k) => p[k] ?? "");
+}
+function applyI18n() {
+  document.documentElement.lang = LANG;
+  document.title = t("app.name");
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+  document.querySelectorAll("[data-i18n-title]").forEach(el => el.setAttribute("title", t(el.dataset.i18nTitle)));
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => el.setAttribute("placeholder", t(el.dataset.i18nPh)));
+  document.querySelectorAll("[data-langs]").forEach(renderLangBox);
+  $("#edit-apps").textContent = S.editApps ? t("apps.done") : t("apps.edit");
+  if (!$("#log-box").textContent || $("#log-box").dataset.hint) { $("#log-box").textContent = t("diag.hint"); $("#log-box").dataset.hint = "1"; }
+  $("#about").textContent = t("about", { v: S.version || "?" });
+}
+const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const flag = (c) => FLAGS[c].replace("<svg ", '<svg class="flag" ');
+function renderLangBox(box) {
+  const name = LANGS.find(l => l[0] === LANG)[1];
+  box.innerHTML = `<button type="button" class="lang-btn" aria-haspopup="menu" aria-expanded="false" title="${esc(name)}" aria-label="${esc(name)}">${flag(LANG)}<span>${LANG.toUpperCase()}</span>${CHEV}</button>`;
+}
+function closeLangMenus() {
+  document.querySelectorAll(".lang-menu").forEach(m => m.remove());
+  document.querySelectorAll(".lang-btn").forEach(b => b.setAttribute("aria-expanded", "false"));
+}
+function openLangMenu(btn) {
+  closeLangMenus();
+  const menu = document.createElement("ul"); menu.className = "lang-menu"; menu.setAttribute("role", "menu");
+  menu.innerHTML = LANGS.map(([c, n]) => `<li role="none"><button type="button" role="menuitemradio" aria-checked="${c === LANG}" data-lang="${c}" lang="${c}">${flag(c)}<span>${esc(n)}</span><span class="code">${c.toUpperCase()}</span></button></li>`).join("");
+  btn.after(menu); btn.setAttribute("aria-expanded", "true");
+  (menu.querySelector("[aria-checked=true]") || menu.querySelector("button")).focus();
+}
+async function setLang(code) {
+  if (!(await loadLang(code))) { toast("Language file missing: " + code); return; }
+  LANG = code; store.set("hm.lang", LANG);
+  applyI18n(); renderLive();
+  if (!$("#app").classList.contains("hidden")) { render(); if ($("#settings").open) loadDevices(); if ($("#kbd-dlg").open) renderKeys(); }
+  else showAuth();
+}
+document.addEventListener("click", (e) => {
+  const item = e.target.closest(".lang-menu [data-lang]");
+  if (item) { closeLangMenus(); setLang(item.dataset.lang); return; }
+  const btn = e.target.closest(".lang-btn");
+  if (btn) { btn.getAttribute("aria-expanded") === "true" ? closeLangMenus() : openLangMenu(btn); return; }
+  if (!e.target.closest(".lang-menu")) closeLangMenus();
+});
+document.addEventListener("keydown", (e) => {
+  const menu = e.target.closest && e.target.closest(".lang-menu"); if (!menu) return;
+  const items = [...menu.querySelectorAll("button")], i = items.indexOf(e.target);
+  if (e.key === "Escape") { e.preventDefault(); const b = menu.previousElementSibling; closeLangMenus(); b && b.focus(); }
+  else if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  else if (e.key === "Home") { e.preventDefault(); items[0].focus(); }
+  else if (e.key === "End") { e.preventDefault(); items[items.length - 1].focus(); }
+});
+
+const KNOWN = {
+  "com.netflix.ninja": "Netflix", "com.google.android.youtube.tv": "YouTube", "com.google.android.youtube.tvkids": "YouTube Kids",
+  "com.google.android.youtube.tvmusic": "YouTube Music", "com.disney.disneyplus": "Disney+", "com.amazon.amazonvideo.livingroom": "Prime Video",
+  "tv.emby.embyatv": "Emby", "net.cme.voyo.cz.tvapp": "Oneplay", "com.spotify.tv.android": "Spotify", "com.android.vending": "Google Play",
+};
+const HOME_PKGS = ["com.google.android.apps.tv.launcherx", "com.google.android.tvlauncher"];
+
+const S = {
+  token: store.get("hm.token"), version: null,
+  tvs: new Map(), np: new Map(), endpoints: null,
+  sel: store.get("hm.tv"), apps: [], appsFor: null, editApps: false, renaming: false,
+  ws: null, wsOk: false, seeking: false, pairing: false, volDrag: false, kbFromTv: false,
+  glowCache: new Map(), volPrev: new Map(),
+};
+
+/* ================= API ================= */
+async function api(path, opts = {}) {
+  const headers = { "X-Lang": LANG, ...(opts.body ? { "Content-Type": "application/json" } : {}), ...(S.token ? { Authorization: "Bearer " + S.token } : {}) };
+  const res = await fetch("/api" + path, { ...opts, headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const data = res.headers.get("content-type")?.includes("json") ? await res.json() : null;
+  if (res.status === 401 && !path.startsWith("/auth/")) { S.token = null; store.set("hm.token", null); showAuth(); throw new Error("unauthorized"); }
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
+}
+const withToken = (url) => S.token ? url + (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(S.token) : url;
+const tvPath = (p = "") => `/tvs/${encodeURIComponent(S.sel)}${p}`;
+
+function toast(msg) {
+  const el = $("#toast"); el.textContent = msg; el.classList.remove("hidden");
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add("hidden"), 3800);
+}
+function deviceName() {
+  const ua = navigator.userAgent;
+  const b = /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "Browser";
+  const os = /Android/.test(ua) ? "Android" : /iPhone|iPad/.test(ua) ? "iOS" : /Windows/.test(ua) ? "Windows" : /Mac OS/.test(ua) ? "macOS" : /Linux/.test(ua) ? "Linux" : "";
+  return `${b}${os ? " · " + os : ""}`;
+}
+async function loadVersion() {
+  try { const h = await (await fetch("/api/health")).json(); S.version = h.version; $("#ver").textContent = h.version || ""; } catch {}
+  $("#about").textContent = t("about", { v: S.version || "?" });
+}
+
+/* ================= přihlášení ================= */
+let authMode = "login";
+async function showAuth() {
+  $("#app").classList.add("hidden"); $("#auth").classList.remove("hidden");
+  for (const d of document.querySelectorAll("dialog[open]")) d.close();
+  if (S.ws) { const w = S.ws; S.ws = null; w.onclose = null; w.close(); }
+  let st = { configured: true, setup_allowed: false };
+  try { st = await api("/auth/status"); } catch {}
+  const form = $("#auth-form");
+  $("#auth-err").textContent = "";
+  if (!st.configured && !st.setup_allowed) {
+    authMode = "none";
+    $("#auth-title").textContent = t("auth.noSetupTitle"); $("#auth-text").textContent = t("auth.noSetupText");
+    form.classList.add("hidden"); return;
+  }
+  form.classList.remove("hidden");
+  authMode = st.configured ? "login" : "setup";
+  $("#auth-title").textContent = st.configured ? t("app.name") : t("auth.welcome");
+  $("#auth-text").textContent = st.configured ? t("auth.loginText") : t("auth.setupText");
+  $("#auth-pw-label").textContent = st.configured ? t("auth.pw") : t("auth.pwNew");
+  $("#auth-pw").autocomplete = st.configured ? "current-password" : "new-password";
+  $("#auth-pw2-wrap").classList.toggle("hidden", st.configured);
+  $("#auth-pw2").required = !st.configured;
+  $("#auth-submit").textContent = st.configured ? t("auth.login") : t("auth.setup");
+  $("#auth-pw").focus();
+}
+$("#auth-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = $("#auth-pw").value;
+  if (authMode === "setup" && pw !== $("#auth-pw2").value) { $("#auth-err").textContent = t("auth.mismatch"); return; }
+  try {
+    const r = await api(authMode === "setup" ? "/auth/setup" : "/auth/login", { method: "POST", body: { password: pw, device_name: deviceName() } });
+    S.token = r.token; store.set("hm.token", r.token);
+    $("#auth-pw").value = ""; $("#auth-pw2").value = "";
+    start();
+  } catch (err) { $("#auth-err").textContent = err.message; }
+});
+
+/* ================= websocket ================= */
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = new WebSocket(withToken(`${proto}//${location.host}/api/ws`) + "&lang=" + LANG);
+  S.ws = ws;
+  ws.onopen = () => { S.wsOk = true; renderLive(); };
+  ws.onclose = (ev) => {
+    S.wsOk = false; renderLive();
+    if (ev.code === 4401) { S.token = null; store.set("hm.token", null); showAuth(); return; }
+    setTimeout(() => { if (S.ws === ws) connectWS(); }, 2000);
+  };
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.type === "snapshot") {
+      S.tvs.clear(); m.tvs.forEach(x => S.tvs.set(x.id, x)); S.endpoints = m.endpoints; S.android = m.android || null; render();
+    } else if (m.type === "android") {
+      S.android = m.android; if ($("#helper-dlg").open) renderHelper();
+      if (m.android?.state === "ready" && $("#qr .android-wait")) $("#add-phone").click();  // aplikace hotová → ukázat i QR ke stažení
+    } else if (m.type === "tv") {
+      const prev = S.tvs.get(m.tv.id); S.tvs.set(m.tv.id, m.tv);
+      if (prev && !prev.helper?.connected && m.tv.helper?.connected) S.appsFor = null;
+      render();
+    } else if (m.type === "tv_removed") {
+      S.tvs.delete(m.id); S.np.delete(m.id); if (S.sel === m.id) { S.sel = null; S.appsFor = null; } render();
+    } else if (m.type === "endpoints") {
+      S.endpoints = m.endpoints;
+    } else if (m.type === "ime") {
+      const tv = S.tvs.get(m.tv_id); if (tv) tv.ime = m.ime;
+      if (m.tv_id !== S.sel) return;
+      const dlg = $("#kbd-dlg");
+      if (m.ime.active && !dlg.open && !document.querySelector("dialog[open]")) { openKeyboard(true); S.kbFromTv = true; }
+      else if (!m.ime.active && dlg.open && S.kbFromTv) dlg.close();
+      else if (dlg.open && m.ime.active && Date.now() - kbLocalEdit > 1500) {
+        $("#kbd-input").value = m.ime.value || ""; kbPrev = $("#kbd-input").value;
+        if (m.ime.label) $("#kbd-title").textContent = m.ime.label;
+      }
+    } else if (m.type === "nowplaying") {
+      S.np.set(m.tv_id, { ...m.data, _recv: Date.now() }); if (m.tv_id === S.sel) renderScreen();
+    } else if (m.type === "key_result") {
+      if (m.key === "settings" && m.via === "remote") toast(t("settings.viaKey"));
+      if (m.key === "power" && m.via === "wol") toast(t("wake.sent"));
+    } else if (m.type === "text_error") {
+      if (m.tv_id === S.sel) toast(m.error === "no-adb" ? t("kbd.keysNeedAdb") : m.error === "no-focus" ? t("kbd.noFocus") : t("kbd.keysFailed", { err: m.error }));
+    } else if (m.type === "error") toast(m.error);
+  };
+}
+/* Upozornění jen při výpadku spojení s backendem (běžný stav se nezobrazuje). */
+function renderLive() { $("#offline").classList.toggle("hidden", S.wsOk || !S.ws); }
+
+/* ================= pomocné ================= */
+const cur = () => S.tvs.get(S.sel);
+const adopted = () => [...S.tvs.values()].filter(x => x.adopted)
+  .sort((a, b) => (a.order ?? 1e6) - (b.order ?? 1e6));
+// barva stavu: zelená zapnuté, oranžová v pohotovosti, červená nedostupné, šedá nespárované
+const stClass = (tv) => !tv || !tv.paired ? "" : !tv.online ? "bad" : tv.is_on === false ? "warn" : "ok";
+const found = () => [...S.tvs.values()].filter(x => !x.adopted);
+const appName = (pkg) => HOME_PKGS.includes(pkg) ? t("scr.home") : (S.apps.find(a => a.package === pkg)?.label || KNOWN[pkg] || pkg || "");
+function fmt(ms) {
+  if (ms == null || ms < 0) return "–:––";
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0");
+}
+function position(np) {
+  if (!np || np.position_ms == null) return null;
+  let p = np.position_ms;
+  if (np.state === "playing") p += (Date.now() - np._recv) * (np.speed || 1);
+  return np.duration_ms ? Math.min(p, np.duration_ms) : p;
+}
+function hashHue(s) { let h = 0; for (const c of s || "") h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; }
+function hslToRgb(h, s, l) {
+  s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [f(0), f(8), f(4)].map(x => Math.round(x * 255));
+}
+function iconUrl(pkg) { return withToken(`/api${tvPath(`/apps/${encodeURIComponent(pkg)}/icon`)}`); }
+function iconFail(img) {
+  const pkg = img.dataset.pkg || "";
+  const [r, g, b] = hslToRgb(hashHue(pkg), 45, 38);
+  const d = document.createElement("div");
+  d.className = "app-fallback"; d.setAttribute("aria-hidden", "true");
+  d.style.background = `rgb(${r},${g},${b})`; d.textContent = (appName(pkg) || "?").slice(0, 1).toUpperCase();
+  img.replaceWith(d);
+}
+function fallbackTile(pkg) {
+  const [r, g, b] = hslToRgb(hashHue(pkg), 45, 38);
+  return `<div class="app-fallback" style="background:rgb(${r},${g},${b})" aria-hidden="true">${esc((appName(pkg) || "?").slice(0, 1).toUpperCase())}</div>`;
+}
+function setGlow(pkg, active) {
+  const root = document.documentElement;
+  root.style.setProperty("--glow-on", active ? "1" : "0.25");
+  if (!pkg) { root.style.setProperty("--glow", "110, 140, 255"); return; }
+  if (S.glowCache.has(pkg)) { root.style.setProperty("--glow", S.glowCache.get(pkg)); return; }
+  root.style.setProperty("--glow", hslToRgb(hashHue(pkg), 70, 58).join(", "));
+  if (!cur()?.helper?.connected) return;
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const c = document.createElement("canvas"); c.width = c.height = 24;
+      const x = c.getContext("2d"); x.drawImage(img, 0, 0, 24, 24);
+      const d = x.getImageData(0, 0, 24, 24).data; let r = 0, g = 0, b = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (d[i + 3] < 128 || mx - mn < 40) continue;
+        r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+      }
+      if (n > 10) { const v = `${Math.round(r / n)}, ${Math.round(g / n)}, ${Math.round(b / n)}`; S.glowCache.set(pkg, v); if (cur()?.current_app === pkg) root.style.setProperty("--glow", v); }
+    } catch {}
+  };
+  img.src = iconUrl(pkg);
+}
+
+/* ================= vykreslení ================= */
+function render() {
+  if (!S.tvs.get(S.sel)?.adopted) S.sel = adopted()[0]?.id || null;
+  renderTabs(); renderHead(); renderScreen(); renderVolume(); renderRemote(); renderApps(); renderAddBtn();
+  if ($("#diag-dlg").open) renderDiag();
+  if ($("#helper-dlg").open) renderHelper();
+  if ($("#add-dlg").open) renderFound();
+}
+function renderAddBtn() {
+  const n = found().length, b = $("#open-add");
+  b.classList.toggle("new", n > 0);
+  b.setAttribute("aria-label", n ? `${t("add.title")} (${n})` : t("add.title"));
+}
+function renderTabs() {
+  const tabs = $("#tabs");
+  const list = adopted();
+  tabs.classList.toggle("hidden", list.length < 1);
+  if (S.renaming && $("#rename-input")) return;  // nepřepisovat rozepsaný název
+  if (tabDrag.s?.active) return;  // během přetahování DOM nepřestavovat (WS aktualizace)
+  tabs.innerHTML = list.map(x => (S.renaming && x.id === S.sel)
+    ? `<form class="tab tab-rename" aria-selected="true" id="rename-form"><span class="dot ${stClass(x)}" aria-hidden="true"></span><input id="rename-input" value="${esc(x.name)}" maxlength="60" aria-label="${esc(t("tv.nameAria"))}"></form>`
+    : `<button class="tab" role="tab" aria-selected="${x.id === S.sel}" data-tv="${esc(x.id)}" title="${esc((x.id === S.sel ? t("tv.rename") + " · " : "") + stateText(x) + (list.length > 1 ? " · " + t("tv.reorder") : ""))}">
+      <span class="dot ${stClass(x)}" aria-hidden="true"></span>${esc(x.name)}</button>`).join("");
+  const form = $("#rename-form");
+  if (form) {
+    const inp = $("#rename-input"); inp.focus(); inp.select();
+    let done = false;
+    const finish = async (save) => {
+      if (done) return; done = true;
+      const name = inp.value.trim();
+      S.renaming = false;
+      if (save && name && name !== cur()?.name) {
+        try { const x = await api(tvPath(), { method: "PUT", body: { name } }); S.tvs.set(x.id, x); } catch (err) { toast(err.message); }
+      }
+      renderTabs();
+    };
+    form.onsubmit = (e) => { e.preventDefault(); finish(true); };
+    inp.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); finish(false); } };
+    inp.onblur = () => finish(true);
+  }
+}
+$("#tabs").addEventListener("dblclick", (e) => {
+  const b = e.target.closest("[data-tv]"); if (!b || b.dataset.tv !== S.sel) return;
+  S.renaming = true; renderTabs();
+});
+$("#tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-tv]"); if (!b || b.dataset.tv === S.sel) return;
+  if (tabDrag.justDropped) { tabDrag.justDropped = false; return; }
+  S.sel = b.dataset.tv; store.set("hm.tv", S.sel); S.appsFor = null; S.pairing = false; S.renaming = false; render();
+});
+/* ===== pořadí záložek zařízení =====
+   Myš: táhnout záložku do strany. Dotyk: podržet 350 ms, pak táhnout (krátký posun = scroll záložek).
+   Klávesnice: Alt+šipka vlevo/vpravo na zaměřené záložce. Pořadí se ukládá v backendu (sdílené všemi). */
+const tabDrag = { s: null, justDropped: false };
+const tabOrderFromDom = () => [...document.querySelectorAll("#tabs [data-tv]")].map(b => b.dataset.tv);
+async function saveTabOrder(before) {
+  const order = tabOrderFromDom();
+  if (before && order.join() === before.join()) return;
+  order.forEach((id, i) => { const x = S.tvs.get(id); if (x) x.order = i; });
+  try { await api("/tvs/order", { method: "PUT", body: { order } }); } catch (err) { toast(err.message); renderTabs(); }
+}
+function tabDragStart() {
+  const d = tabDrag.s; if (!d || d.active) return;
+  d.active = true; d.before = tabOrderFromDom();
+  d.tab.classList.add("tab-dragging"); $("#tabs").classList.add("tabs-dragging");
+  if (d.touch && navigator.vibrate) try { navigator.vibrate(15); } catch {}
+}
+function tabDragMove(x) {
+  const d = tabDrag.s, tabs = $("#tabs"); if (!d?.active) return;
+  const r = tabs.getBoundingClientRect();
+  const over = document.elementFromPoint(Math.min(Math.max(x, r.left + 1), r.right - 1), r.top + r.height / 2)?.closest?.("#tabs [data-tv]");
+  if (over && over !== d.tab) {
+    const o = over.getBoundingClientRect();
+    tabs.insertBefore(d.tab, x > o.left + o.width / 2 ? over.nextSibling : over);
+  }
+  tabs.scrollLeft += x < r.left + 40 ? -12 : x > r.right - 40 ? 12 : 0;
+}
+function tabDragEnd() {
+  const d = tabDrag.s; tabDrag.s = null; if (!d) return;
+  clearTimeout(d.timer); if (!d.active) return;
+  d.tab.classList.remove("tab-dragging"); $("#tabs").classList.remove("tabs-dragging");
+  tabDrag.justDropped = true; setTimeout(() => { tabDrag.justDropped = false; }, 400);
+  saveTabOrder(d.before);
+}
+$("#tabs").addEventListener("pointerdown", (e) => {
+  if (e.button > 0 || S.renaming || adopted().length < 2) return;
+  const tab = e.target.closest("[data-tv]"); if (!tab) return;
+  tabDrag.s = { tab, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, active: false, touch: e.pointerType !== "mouse" };
+  if (tabDrag.s.touch) tabDrag.s.timer = setTimeout(tabDragStart, 350);
+});
+document.addEventListener("pointermove", (e) => {
+  const d = tabDrag.s; if (!d || e.pointerId !== d.id) return;
+  d.x = e.clientX;
+  if (!d.active) {
+    if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 8) return;
+    if (d.touch) { clearTimeout(d.timer); tabDrag.s = null; return; }  // dotyk bez podržení = scroll záložek
+    tabDragStart();
+  }
+  tabDragMove(d.x);
+});
+document.addEventListener("pointerup", tabDragEnd);
+document.addEventListener("pointercancel", tabDragEnd);
+document.addEventListener("touchmove", (e) => { if (tabDrag.s?.active) e.preventDefault(); }, { passive: false });
+$("#tabs").addEventListener("contextmenu", (e) => { if (e.target.closest("[data-tv]")) e.preventDefault(); });
+$("#tabs").addEventListener("keydown", (e) => {
+  if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+  const tab = e.target.closest("[data-tv]"); if (!tab) return;
+  e.preventDefault();
+  const before = tabOrderFromDom();
+  const sib = e.key === "ArrowLeft" ? tab.previousElementSibling : tab.nextElementSibling;
+  if (!sib) return;
+  tab.parentNode.insertBefore(tab, e.key === "ArrowLeft" ? sib : sib.nextSibling);
+  tab.focus(); saveTabOrder(before);
+});
+const stateText = (tv) => !tv.paired ? t("state.unpaired") : !tv.online ? t("state.offline") : tv.is_on === false ? t("state.standby") : t("state.on");
+function renderHead() {
+  const tv = cur(), head = $("#tv-head"), meta = $("#tv-meta");
+  $("#open-diag").classList.toggle("hidden", !tv);
+  if (!tv) { head.innerHTML = `<span>${esc(t("tv.none"))}</span>`; meta.innerHTML = ""; return; }
+  const di = tv.device_info || {};
+  head.innerHTML = `${di.manufacturer || di.model ? `<span>${esc([di.manufacturer, di.model].filter(Boolean).join(" "))}</span>` : ""}<span>${esc(tv.host || "")}</span>`;
+  meta.innerHTML = `<span class="status-dot ${stClass(tv)}">${esc(stateText(tv))}</span>`;
+}
+
+function renderScreen() {
+  const tv = cur(), el = $("#screen");
+  if (S.seeking) return;
+  const hideTransport = () => $("#transport").classList.add("hidden");
+  const msg = (title, text, extra = "") => `<div class="screen-inner"><div class="state-msg"><h2>${esc(title)}</h2><p>${esc(text)}</p>${extra}</div></div>`;
+  if (!tv) { el.innerHTML = msg(t("scr.searchTitle"), t("scr.searchText")); setGlow(null, false); hideTransport(); return; }
+  if (!tv.paired) {
+    el.innerHTML = msg(S.pairing ? t("scr.pairCodeTitle") : t("scr.unpairedTitle"),
+      S.pairing ? t("scr.pairCodeText") : t("scr.unpairedText", { host: tv.host || "?" }),
+      (S.pairing
+        ? `<form class="inline-form" id="pair-form"><input class="code-input" id="pair-code" maxlength="6" autocomplete="off" autocapitalize="characters" aria-label="${esc(t("scr.codeAria"))}" required><button class="btn" type="submit">${esc(t("scr.pairConfirm"))}</button><button class="btn ghost" type="button" id="pair-again">${esc(t("scr.pairAgain"))}</button></form>`
+        : `<button class="btn" id="pair-start">${esc(t("scr.pairStart"))}</button>`) + `<div class="err" id="pair-err"></div>`);
+    setGlow(null, false); hideTransport(); bindPairing(); return;
+  }
+  if (!tv.online) { el.innerHTML = msg(t("scr.offTitle"), t("scr.offText"), `<button class="btn" data-key="power">${esc(t("scr.wake"))}</button>`); setGlow(null, false); hideTransport(); return; }
+  if (tv.is_on === false) {
+    el.innerHTML = msg(t("scr.standbyTitle"), t("scr.standbyText"), `<button class="btn" data-key="power">${esc(t("scr.powerOn"))}</button>`);
+    setGlow(null, false); hideTransport(); return;
+  }
+  const np = S.np.get(tv.id);
+  const npActive = np && np.active && np.state !== "none";
+  const pkg = (npActive && np.package) || tv.current_app;
+  const icon = tv.helper?.connected && pkg ? `<img src="${esc(iconUrl(pkg))}" data-pkg="${esc(pkg)}" alt="" onerror="iconFail(this)">` : (pkg ? fallbackTile(pkg) : "");
+  let body;
+  if (npActive && (np.title || np.duration_ms)) {
+    const p = position(np), d = np.duration_ms || 0, canSeek = np.can_seek && d > 0;
+    body = `<div class="title">${esc(np.title || appName(pkg))}</div>
+      ${np.subtitle ? `<div class="subtitle">${esc(np.subtitle)}</div>` : ""}
+      <div class="seek"><span id="t-pos">${fmt(p)}</span>
+        <input type="range" class="slider" id="seek" min="0" max="${d || 1}" step="1000" value="${p || 0}" ${canSeek ? "" : "disabled"} aria-label="${esc(t("scr.seekAria"))}" style="--p:${d ? (100 * (p || 0) / d) : 0}%">
+        <span>${d ? fmt(d) : "–:––"}</span></div>
+      ${np.can_seek === false ? `<div class="subtitle" style="font-size:.85rem">${esc(t("scr.noSeek"))}</div>` : ""}`;
+  } else {
+    body = `<div class="title">${esc(appName(pkg) || t("scr.home"))}</div>
+      <div class="subtitle">${esc(tv.helper?.connected ? t("scr.nothing") : t("scr.needHelper"))}</div>`;
+  }
+  el.innerHTML = `<div class="screen-inner"><div class="app-row">${icon}<span>${esc(appName(pkg) || "")}</span></div>${body}</div>`;
+  setGlow(pkg, npActive ? np.state === "playing" : true);
+  $("#transport").classList.remove("hidden");
+  $('#transport [data-key="play_pause"]').setAttribute("aria-label", npActive && np.state === "playing" ? t("key.pause") : t("key.play"));
+  bindSeek();
+}
+
+/* ================= hlasitost ================= */
+const arc = (frac) => `${Math.max(0, Math.min(1, frac)) * 270} 360`;
+function paintRing(level, max, muted) {
+  $("#vol-arc").setAttribute("stroke-dasharray", arc(muted ? 0 : level / (max || 100)));
+  $("#vol-num").textContent = muted ? t("vol.muted") : level;
+  $("#vol-ring").classList.toggle("muted", !!muted);
+}
+function showOsd(level, max, muted) {
+  $("#osd-arc").setAttribute("stroke-dasharray", arc(muted ? 0 : level / (max || 100)));
+  $("#osd-num").textContent = muted ? "–" : level;
+  const o = $("#vol-osd"); o.classList.add("show");
+  clearTimeout(showOsd._t); showOsd._t = setTimeout(() => o.classList.remove("show"), 2000);
+}
+function renderVolume() {
+  const tv = cur(), ring = $("#vol-ring");
+  const usable = tv && tv.paired && tv.online && tv.is_on !== false && tv.volume;
+  ring.classList.toggle("hidden", !usable);
+  if (!usable) return;
+  const v = tv.volume, key = `${v.level}/${v.muted}`, prev = S.volPrev.get(tv.id);
+  if (!S.volDrag) paintRing(v.level, v.max, v.muted);
+  if (prev !== undefined && prev !== key && !S.volDrag) showOsd(v.level, v.max, v.muted);
+  S.volPrev.set(tv.id, key);
+}
+(function bindVolumeRing() {
+  const ring = $("#vol-ring");
+  let start = null, moved = false, target = null, lastSent = 0;
+  const levelFrom = (ev) => {
+    const r = ring.getBoundingClientRect();
+    const a = Math.atan2(ev.clientY - (r.top + r.height / 2), ev.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+    let rel = (a - 135 + 360) % 360;
+    if (rel > 270) rel = rel > 315 ? 0 : 270;
+    return Math.round(rel / 270 * (cur()?.volume?.max || 100));
+  };
+  const send = (lvl) => api(tvPath("/volume"), { method: "POST", body: { level: lvl } }).catch(e => toast(e.message));
+  ring.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ring.setPointerCapture(ev.pointerId); start = { x: ev.clientX, y: ev.clientY }; moved = false; target = null; });
+  ring.addEventListener("pointermove", (ev) => {
+    if (!start) return;
+    if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5) return;
+    moved = true; S.volDrag = true;
+    const max = cur()?.volume?.max || 100;
+    target = levelFrom(ev); paintRing(target, max, false); showOsd(target, max, false);
+    if (Date.now() - lastSent > 350) { lastSent = Date.now(); send(target); }
+  });
+  const end = () => {
+    if (!start) return;
+    if (!moved) sendKey("mute"); else if (target != null) send(target);
+    start = null; setTimeout(() => { S.volDrag = false; }, 1200);
+  };
+  ring.addEventListener("pointerup", end);
+  ring.addEventListener("pointercancel", end);
+  ring.addEventListener("keydown", (ev) => {
+    if (ev.key === "ArrowUp" || ev.key === "ArrowRight") { ev.preventDefault(); ev.stopPropagation(); sendKey("vol_up"); }
+    if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") { ev.preventDefault(); ev.stopPropagation(); sendKey("vol_down"); }
+  });
+})();
+
+function renderRemote() { const tv = cur(); $("#remote").setAttribute("aria-disabled", !(tv && tv.paired && tv.online)); }
+
+/* ================= rozložení desky (pořadí částí) ================= */
+const ZONES = ["screen", "remote", "apps"];
+S.layout = (() => { try { const l = JSON.parse(store.get("hm.layout")); if (Array.isArray(l) && l.length === 3 && ZONES.every(z => l.includes(z))) return l; } catch {} return ["remote", "screen", "apps"]; })();
+function applyLayout() {
+  const zones = $("#zones");
+  S.layout.forEach((name, i) => {
+    const el = zones.querySelector(`[data-zone="${name}"]`);
+    el.style.order = i; el.classList.toggle("full", i === 2);
+  });
+  const col = (n) => n === "remote" ? "320px" : "minmax(0, 1fr)";
+  zones.style.gridTemplateColumns = `${col(S.layout[0])} ${col(S.layout[1])}`;
+}
+function moveZone(from, to) {
+  const a = S.layout.indexOf(from), b = S.layout.indexOf(to);
+  if (a < 0 || b < 0 || a === b) return;
+  [S.layout[a], S.layout[b]] = [S.layout[b], S.layout[a]];
+  store.set("hm.layout", JSON.stringify(S.layout)); applyLayout();
+}
+(function bindGrips() {
+  let drag = null;
+  const zoneAt = (x, y) => document.elementFromPoint(x, y)?.closest?.(".zone");
+  document.addEventListener("pointerdown", (e) => {
+    const g = e.target.closest("[data-grip]"); if (!g) return;
+    e.preventDefault(); g.setPointerCapture(e.pointerId);
+    drag = { zone: g.closest(".zone"), target: null, grip: g };
+    drag.zone.classList.add("moving");
+  });
+  document.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const z = zoneAt(e.clientX, e.clientY);
+    const target = z && z !== drag.zone ? z : null;
+    if (target !== drag.target) { drag.target?.classList.remove("drop-target"); target?.classList.add("drop-target"); drag.target = target; }
+  });
+  const end = () => {
+    if (!drag) return;
+    drag.zone.classList.remove("moving"); drag.target?.classList.remove("drop-target");
+    if (drag.target) moveZone(drag.zone.dataset.zone, drag.target.dataset.zone);
+    drag = null;
+  };
+  document.addEventListener("pointerup", end);
+  document.addEventListener("pointercancel", end);
+  // klávesnicí: Enter/mezerník na úchytu posune část o jedno místo dál
+  document.addEventListener("click", (e) => {
+    const g = e.target.closest("[data-grip]"); if (!g || e.detail !== 0) return;
+    const name = g.closest(".zone").dataset.zone, i = S.layout.indexOf(name);
+    moveZone(name, S.layout[(i + 1) % 3]); g.focus();
+  });
+})();
+applyLayout();
+
+/* ================= aplikace ================= */
+async function renderApps() {
+  const tv = cur(), body = $("#apps-body"), edit = $("#edit-apps");
+  $("#apps-menu-btn").classList.toggle("hidden", !(tv && tv.paired));
+
+  if (!tv || !tv.paired) { body.innerHTML = `<div class="empty"><p>${esc(t("apps.afterPair"))}</p></div>`; edit.classList.add("hidden"); $("#open-helper2").classList.add("hidden"); return; }
+  if (!tv.helper?.connected) {
+    edit.classList.add("hidden");
+    body.innerHTML = `<div class="empty"><p>${esc(t("apps.needHelper"))}</p><button class="btn ghost" id="go-helper">${esc(t("apps.installHelper"))}</button></div>`;
+    $("#open-helper2").classList.add("hidden");
+    $("#go-helper").onclick = openHelper; return;
+  }
+  edit.classList.remove("hidden");
+  $("#open-helper2").classList.remove("hidden");
+  if (S.appsFor !== tv.id) {
+    S.appsFor = tv.id; body.innerHTML = `<p class="muted">${esc(t("apps.loading"))}</p>`;
+    try { S.apps = await api(tvPath("/apps?include_hidden=1")); }
+    catch (e) { S.appsFor = null; body.innerHTML = `<div class="empty"><p>${esc(t("apps.loadFailed", { err: e.message }))}</p></div>`; return; }
+  }
+  const list = S.editApps ? S.apps : S.apps.filter(a => !a.hidden);
+  if (!list.length) { body.innerHTML = `<div class="empty"><p>${esc(t("apps.allHidden"))}</p></div>`; return; }
+  body.innerHTML = (S.editApps ? `<div class="apps-hint"><p class="muted">${esc(t("apps.editHint"))}</p><button class="btn ghost" type="button" data-apps-done>${esc(t("apps.done"))}</button></div>` : "") + `<div class="app-grid ${S.editApps ? "editing" : ""}">${list.map(a => `
+    <button class="app-tile ${a.hidden ? "is-hidden" : ""} ${a.package === tv.current_app ? "running" : ""}" data-pkg="${esc(a.package)}" aria-label="${esc(t(S.editApps ? (a.hidden ? "apps.show" : "apps.hide") : "apps.launch", { name: a.label }))}">
+      <img src="${esc(iconUrl(a.package))}" data-pkg="${esc(a.package)}" alt="" loading="lazy" draggable="false" onerror="iconFail(this)">
+      <span>${esc(a.label)}</span>
+      ${S.editApps ? `<i class="eye" aria-hidden="true">${a.hidden
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-3 3.6M6.6 6.6A16 16 0 0 0 2.5 12S6 18 12 18a9.6 9.6 0 0 0 4.4-1"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>'}</i>` : ""}
+    </button>`).join("")}</div>`;
+}
+$("#apps-body").addEventListener("click", async (e) => {
+  if (e.target.closest("[data-apps-done]")) { if (S.editApps) $("#edit-apps").click(); return; }
+  const tile = e.target.closest(".app-tile"); if (!tile) return;
+  if (appDrag.justDropped) { appDrag.justDropped = false; return; }
+  const pkg = tile.dataset.pkg;
+  if (S.editApps) {
+    const app = S.apps.find(a => a.package === pkg); const hidden = !app.hidden;
+    try { await api(tvPath(`/apps/${encodeURIComponent(pkg)}/hidden`), { method: "PUT", body: { hidden } }); app.hidden = hidden; renderApps(); }
+    catch (err) { toast(err.message); }
+  } else {
+    try { await api(tvPath("/launch"), { method: "POST", body: { package: pkg } }); toast(t("apps.launching", { name: appName(pkg) })); }
+    catch (err) { toast(err.message); }
+  }
+});
+$("#open-helper2").onclick = () => { closeAppsMenu(); openHelper(); };
+function closeAppsMenu() { $("#apps-menu").classList.add("hidden"); $("#apps-menu-btn").setAttribute("aria-expanded", "false"); }
+$("#apps-menu-btn").onclick = (e) => {
+  e.stopPropagation();
+  const m = $("#apps-menu"), open = m.classList.contains("hidden");
+  m.classList.toggle("hidden", !open); $("#apps-menu-btn").setAttribute("aria-expanded", String(open));
+  if (open) m.querySelector("button:not(.hidden)")?.focus();
+};
+document.addEventListener("click", (e) => { if (!e.target.closest(".pop-wrap")) closeAppsMenu(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#apps-menu").classList.contains("hidden")) { closeAppsMenu(); $("#apps-menu-btn").focus(); } });
+
+/* ===== přeuspořádání aplikací přetažením (v režimu Upravit) =====
+   Myš: táhnout po posunu o 8 px. Dotyk: podržet 280 ms, pak táhnout (krátký posun = normální scroll).
+   Klávesnice: šipky vlevo/vpravo na zaměřené dlaždici. */
+const appDrag = { s: null, justDropped: false };
+function appOrderFromDom() { return [...document.querySelectorAll("#apps-body .app-tile")].map(t => t.dataset.pkg); }
+async function saveAppOrder(before) {
+  const order = appOrderFromDom();
+  if (before && order.join("\n") === before.join("\n")) return;
+  const rank = new Map(order.map((p, i) => [p, i]));
+  S.apps.sort((a, b) => (rank.get(a.package) ?? 1e9) - (rank.get(b.package) ?? 1e9));
+  try { await api(tvPath("/apps/order"), { method: "PUT", body: { order } }); }
+  catch (err) { toast(err.message); }
+}
+function appDragStart(ev) {
+  const d = appDrag.s; if (!d || d.active) return;
+  d.active = true;
+  const r = d.tile.getBoundingClientRect();
+  d.offX = d.x - r.left; d.offY = d.y - r.top;
+  d.ghost = d.tile.cloneNode(true);
+  d.ghost.classList.add("app-ghost");
+  Object.assign(d.ghost.style, { width: r.width + "px", height: r.height + "px", left: "0px", top: "0px" });
+  document.body.appendChild(d.ghost);
+  d.tile.classList.add("drag-placeholder");
+  d.before = appOrderFromDom();
+  appDragMove(d.x, d.y);
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch {}
+}
+function appDragMove(x, y) {
+  const d = appDrag.s; if (!d || !d.active) return;
+  d.ghost.style.transform = `translate(${x - d.offX}px, ${y - d.offY}px) scale(1.06)`;
+  const over = document.elementFromPoint(x, y)?.closest?.("#apps-body .app-tile");
+  if (over && over !== d.tile) {
+    const r = over.getBoundingClientRect();
+    const after = (y > r.bottom - r.height * 0.25) || (x > r.left + r.width / 2 && y > r.top + r.height * 0.1);
+    over.parentNode.insertBefore(d.tile, after ? over.nextSibling : over);
+  }
+  const edge = 70;
+  d.scroll = y < edge ? -14 : y > innerHeight - edge ? 14 : 0;
+  if (d.scroll && !d.scrollT) d.scrollT = setInterval(() => { if (appDrag.s?.scroll) scrollBy(0, appDrag.s.scroll); }, 16);
+  if (!d.scroll && d.scrollT) { clearInterval(d.scrollT); d.scrollT = null; }
+}
+function appDragEnd() {
+  const d = appDrag.s; appDrag.s = null; if (!d) return;
+  clearTimeout(d.timer); if (d.scrollT) clearInterval(d.scrollT);
+  if (!d.active) return;
+  d.ghost.remove(); d.tile.classList.remove("drag-placeholder");
+  appDrag.justDropped = true; setTimeout(() => { appDrag.justDropped = false; }, 400);
+  saveAppOrder(d.before);
+}
+$("#apps-body").addEventListener("pointerdown", (e) => {
+  if (!S.editApps || e.button > 0) return;
+  const tile = e.target.closest(".app-tile"); if (!tile) return;
+  appDrag.s = { tile, id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, active: false, touch: e.pointerType !== "mouse" };
+  if (appDrag.s.touch) appDrag.s.timer = setTimeout(appDragStart, 280);
+});
+document.addEventListener("pointermove", (e) => {
+  const d = appDrag.s; if (!d || e.pointerId !== d.id) return;
+  d.x = e.clientX; d.y = e.clientY;
+  if (!d.active) {
+    if (Math.hypot(d.x - d.x0, d.y - d.y0) < 8) return;
+    if (d.touch) { clearTimeout(d.timer); appDrag.s = null; return; }  // dotyk bez podržení = scroll
+    appDragStart();
+  }
+  appDragMove(d.x, d.y);
+});
+document.addEventListener("pointerup", appDragEnd);
+document.addEventListener("pointercancel", appDragEnd);
+document.addEventListener("touchmove", (e) => { if (appDrag.s?.active) e.preventDefault(); }, { passive: false });
+document.addEventListener("contextmenu", (e) => { if (S.editApps && e.target.closest("#apps-body .app-tile")) e.preventDefault(); });
+$("#apps-body").addEventListener("keydown", (e) => {
+  if (!S.editApps || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+  const tile = e.target.closest(".app-tile"); if (!tile) return;
+  e.preventDefault(); e.stopPropagation();
+  const before = appOrderFromDom();
+  const sib = e.key === "ArrowLeft" ? tile.previousElementSibling : tile.nextElementSibling;
+  if (!sib) return;
+  tile.parentNode.insertBefore(tile, e.key === "ArrowLeft" ? sib : sib.nextSibling);
+  tile.focus(); saveAppOrder(before);
+});
+/* Úchyty pro přesun bloků: skryté, objeví se u horního okraje bloku (myš), na dotyk po klepnutí do pruhu u okraje. */
+(() => {
+  const BAND = 30;
+  const near = (z, x, y) => { const r = z.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top - 18 && y <= r.top + BAND; };
+  document.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    document.querySelectorAll(".zone").forEach(z => z.classList.toggle("grip-near", near(z, e.clientX, e.clientY)));
+  }, { passive: true });
+  document.addEventListener("pointerleave", () => document.querySelectorAll(".zone.grip-near").forEach(z => z.classList.remove("grip-near")));
+  let hideT = null;
+  document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse") return;
+    const z = [...document.querySelectorAll(".zone")].find(z => near(z, e.clientX, e.clientY));
+    if (!z) return;
+    document.querySelectorAll(".zone.grip-near").forEach(o => o !== z && o.classList.remove("grip-near"));
+    z.classList.add("grip-near"); clearTimeout(hideT);
+    hideT = setTimeout(() => { if (!z.classList.contains("moving")) z.classList.remove("grip-near"); }, 4000);
+  }, true);
+})();
+$("#edit-apps").onclick = () => {
+  closeAppsMenu();
+  S.editApps = !S.editApps;
+  $("#edit-apps").textContent = S.editApps ? t("apps.done") : t("apps.edit");
+  $("#edit-apps").setAttribute("aria-pressed", S.editApps);
+  renderApps();
+};
+
+/* ================= párování ================= */
+function bindPairing() {
+  const startPair = async () => {
+    try { await api(tvPath("/pair/start"), { method: "POST" }); S.pairing = true; renderScreen(); $("#pair-code")?.focus(); }
+    catch (e) { $("#pair-err").textContent = e.message; }
+  };
+  $("#pair-start") && ($("#pair-start").onclick = startPair);
+  $("#pair-again") && ($("#pair-again").onclick = startPair);
+  const f = $("#pair-form");
+  if (f) f.onsubmit = async (e) => {
+    e.preventDefault();
+    f.querySelector("button[type=submit]").disabled = true;
+    try { await api(tvPath("/pair/finish"), { method: "POST", body: { code: $("#pair-code").value.trim() } }); S.pairing = false; toast(t("scr.paired")); }
+    catch (err) { S.pairing = false; renderScreen(); $("#pair-err").textContent = t("scr.pairFailed", { err: err.message }); }
+  };
+}
+
+/* ================= posuvník přehrávání ================= */
+function bindSeek() {
+  const s = $("#seek"); if (!s || s.disabled) return;
+  const upd = () => { s.style.setProperty("--p", (100 * s.value / s.max) + "%"); $("#t-pos").textContent = fmt(+s.value); };
+  s.addEventListener("pointerdown", () => { S.seeking = true; });
+  s.addEventListener("input", () => { S.seeking = true; upd(); });
+  s.addEventListener("change", async () => {
+    const pos = +s.value; S.seeking = false;
+    const np = S.np.get(S.sel); if (np) { np.position_ms = pos; np._recv = Date.now(); }
+    try { await api(tvPath("/seek"), { method: "POST", body: { position_ms: pos } }); } catch (e) { toast(e.message); }
+    renderScreen();
+  });
+}
+setInterval(() => {
+  if (S.seeking) return;
+  const np = S.np.get(S.sel), s = $("#seek"); if (!np || !s) return;
+  const p = position(np); if (p == null) return;
+  s.value = p; s.style.setProperty("--p", (100 * p / s.max) + "%");
+  const el = $("#t-pos"); if (el) el.textContent = fmt(p);
+}, 500);
+
+/* ================= klávesy ovladače ================= */
+function wsSend(obj) {
+  if (S.ws && S.ws.readyState === 1) { S.ws.send(JSON.stringify({ tv_id: S.sel, ...obj })); return true; }
+  return false;
+}
+function sendKey(key, direction = "SHORT") {
+  if (!cur()) return;
+  if (!wsSend({ key, direction })) api(tvPath("/key"), { method: "POST", body: { key, direction } })
+    .then(r => { if (key === "settings" && r?.via === "remote") toast(t("settings.viaKey")); if (key === "power" && r?.via === "wol") toast(t("wake.sent")); })
+    .catch(e => toast(e.message));
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
+}
+function sendText(text) {
+  if (!cur() || text == null) return;
+  if (!wsSend({ text })) api(tvPath("/text"), { method: "POST", body: { text } }).catch(e => toast(e.message));
+}
+let repeatT = null;
+/* Tlačítka s data-hold (OK): krátký stisk = SHORT, podržení = START_LONG … END_LONG (kontextová nabídka).
+   Dlouhý stisk se na TV pošle až po 450 ms, aby zpoždění sítě nezměnilo krátký stisk v dlouhý. */
+let hold = null;
+function endHold(cancel) {
+  if (!hold) return;
+  clearTimeout(hold.timer);
+  if (hold.long) sendKey(hold.key, "END_LONG");
+  else if (!cancel) sendKey(hold.key);
+  hold.btn.classList.remove("holding");
+  hold = null;
+}
+document.addEventListener("pointerdown", (e) => {
+  const b = e.target.closest("[data-key]"); if (!b) return;
+  e.preventDefault();
+  if (b.hasAttribute("data-hold")) {
+    endHold(true);
+    const key = b.dataset.key;
+    hold = { key, btn: b, long: false, timer: setTimeout(() => {
+      if (!hold) return;
+      hold.long = true; b.classList.add("holding"); sendKey(key, "START_LONG");
+      if (navigator.vibrate) try { navigator.vibrate(25); } catch {}
+    }, 450) };
+    return;
+  }
+  sendKey(b.dataset.key);
+  if (b.hasAttribute("data-repeat")) {
+    clearTimeout(repeatT);
+    repeatT = setTimeout(function r() { sendKey(b.dataset.key); repeatT = setTimeout(r, 140); }, 420);
+  }
+});
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-key]"); if (b && e.detail === 0) sendKey(b.dataset.key); });
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => document.addEventListener(ev, (e) => {
+  clearTimeout(repeatT); repeatT = null;
+  if (!hold) return;
+  if (ev === "pointerup") endHold(false);
+  else if (ev === "pointercancel" || e.target === hold.btn) endHold(!hold.long);  // sjetí prstem z OK = zrušit krátký stisk
+}, true));
+document.addEventListener("visibilitychange", () => { if (document.hidden) endHold(true); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest("input, select, textarea, dialog[open]") || e.ctrlKey || e.metaKey || e.altKey) return;
+  if ((e.key === "Enter" || e.key === " ") && e.target.closest("button")) return;
+  const map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok", Backspace: "back", Escape: "back", " ": "play_pause", "+": "vol_up", "=": "vol_up", "-": "vol_down", m: "mute", h: "home" };
+  const k = map[e.key]; if (!k) return;
+  e.preventDefault(); sendKey(k);
+});
+
+/* ================= vstupy ================= */
+$("#open-inputs").onclick = async () => {
+  const tv = cur(); if (!tv) return;
+  if (!tv.helper?.connected) { sendKey("input"); return; }
+  const list = $("#inputs-list");
+  list.innerHTML = `<p class="muted">${esc(t("inputs.loading"))}</p>`; $("#inputs-dlg").showModal();
+  try {
+    const inputs = await api(tvPath("/inputs"));
+    list.innerHTML = inputs.length ? inputs.map(i => `<button data-input="${esc(i.id)}">${esc(i.label)}</button>`).join("") : `<p class="muted">${esc(t("inputs.none"))}</p>`;
+  } catch (e) { list.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+};
+$("#inputs-list").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-input]"); if (!b) return;
+  try { await api(tvPath("/inputs/select"), { method: "POST", body: { id: b.dataset.input } }); $("#inputs-dlg").close(); toast(t("inputs.switching", { name: b.textContent })); }
+  catch (err) { toast(err.message); }
+});
+
+/* ================= klávesnice ================= */
+const KB = {
+  lower: [["1","2","3","4","5","6","7","8","9","0"], ["q","w","e","r","t","z","u","i","o","p"], ["a","s","d","f","g","h","j","k","l"], ["shift","y","x","c","v","b","n","m","del"], ["alt","@",".","space","-","enter"]],
+  alt: [["ě","š","č","ř","ž","ý","á","í","é","ú"], ["ů","ď","ť","ň","ó","?","!",",",":",";"], ["(",")","/","\\","&","%","#","_","'"], ["shift","\"","+","=","*","<",">","~","del"], ["abc","@",".","space","-","enter"]],
+};
+let kbShift = false, kbLayer = "lower", kbPrev = "";
+const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7 6-7Z"/><path d="m12 9 5 6M17 9l-5 6"/></svg>';
+const ICON_SHIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 4 3 13h5v7h8v-7h5L12 4Z"/></svg>';
+function renderKeys() {
+  $("#keys").innerHTML = KB[kbLayer].map(row => `<div class="krow">${row.map(k => {
+    if (k === "shift") return `<button class="key wide ${kbShift ? "on" : ""}" data-k="shift" aria-label="${esc(t("kbd.shift"))}" aria-pressed="${kbShift}">${ICON_SHIFT}</button>`;
+    if (k === "del") return `<button class="key wide" data-k="del" aria-label="${esc(t("kbd.del"))}">${ICON_DEL}</button>`;
+    if (k === "space") return `<button class="key space" data-k="space" aria-label="${esc(t("kbd.space"))}"></button>`;
+    if (k === "enter") return `<button class="key wide" data-k="enter">${esc(t("kbd.done"))}</button>`;
+    if (k === "alt") return `<button class="key wide" data-k="alt">ěšč</button>`;
+    if (k === "abc") return `<button class="key wide" data-k="abc">abc</button>`;
+    const ch = kbShift ? k.toUpperCase() : k;
+    return `<button class="key" data-k="${esc(ch)}">${esc(ch)}</button>`;
+  }).join("")}</div>`).join("");
+}
+/* Na backend jde vždy požadovaný CELÝ obsah pole – backend z rozdílu pošle mazání a vložení. */
+let kbTimer = null, kbLocalEdit = 0;
+function syncField(value) {
+  kbLocalEdit = Date.now();
+  if (value === kbPrev) return;
+  kbPrev = value;
+  clearTimeout(kbTimer);
+  kbTimer = setTimeout(() => sendText(value), 120);
+}
+function openKeyboard(fromTv) {
+  const ime = cur()?.ime || {};
+  const inp = $("#kbd-input");
+  inp.value = ime.value || ""; kbPrev = inp.value;
+  $("#kbd-title").textContent = ime.label || t("kbd.title");
+  renderKeys();
+  if (!$("#kbd-dlg").open) $("#kbd-dlg").showModal();
+  if (!fromTv || !matchMedia("(hover: none)").matches) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+$("#keys").addEventListener("pointerdown", (e) => {
+  const b = e.target.closest("[data-k]"); if (!b) return;
+  e.preventDefault();
+  const k = b.dataset.k, inp = $("#kbd-input");
+  if (k === "shift") { kbShift = !kbShift; renderKeys(); return; }
+  if (k === "alt" || k === "abc") { kbLayer = k === "alt" ? "alt" : "lower"; renderKeys(); return; }
+  if (k === "enter") { clearTimeout(kbTimer); if (inp.value !== kbPrev) sendText(inp.value); setTimeout(() => sendKey("KEYCODE_ENTER"), 150); return; }
+  if (k === "del") { inp.value = inp.value.slice(0, -1); syncField(inp.value); return; }
+  inp.value += k === "space" ? " " : k; syncField(inp.value);
+  if (kbShift) { kbShift = false; renderKeys(); }
+});
+$("#kbd-input").addEventListener("input", (e) => syncField(e.target.value));
+$("#kbd-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); clearTimeout(kbTimer); sendText(e.target.value); setTimeout(() => sendKey("KEYCODE_ENTER"), 150); }
+});
+$("#open-kbd").onclick = () => { S.kbFromTv = false; openKeyboard(false); };
+
+/* ================= nastavení ================= */
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
+document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", (e) => { if (e.target === d) d.close(); }));
+function openSettings() { $("#qr").classList.add("hidden"); loadSettings(); $("#settings").showModal(); }
+$("#open-settings").onclick = openSettings;
+function openDiag() { renderDiag(); $("#diag-dlg").showModal(); loadLogs(); }
+$("#open-diag").onclick = openDiag;
+function openHelper() { $("#adb-result").textContent = ""; $("#helper-err").textContent = ""; renderHelper(); $("#helper-dlg").showModal(); }
+function openAdd() { $("#add-err").textContent = ""; renderFound(); $("#add-dlg").showModal(); }
+$("#open-add").onclick = openAdd;
+function renderFound() {
+  const list = found(), ul = $("#found-list");
+  ul.innerHTML = list.length
+    ? list.map(x => `<li><div><span class="name">${esc(x.name)}</span><small>${esc(x.host || "")}</small></div><button class="btn" data-adopt="${esc(x.id)}">${esc(t("add.adopt"))}</button></li>`).join("")
+    : `<li class="muted" style="border-style:dashed">${esc(t("add.none"))}</li>`;
+}
+$("#found-list").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-adopt]"); if (!b) return;
+  try {
+    const x = await api(`/tvs/${encodeURIComponent(b.dataset.adopt)}/adopt`, { method: "POST" });
+    S.tvs.set(x.id, x); S.sel = x.id; store.set("hm.tv", x.id); S.appsFor = null; S.pairing = false;
+    $("#add-dlg").close(); render(); toast(t("add.done", { name: x.name }));
+  } catch (err) { toast(err.message); }
+});
+function renderHelper() {
+  const tv = cur(), h = tv?.helper || {};
+  $("#helper-status").innerHTML = !tv ? "" : h.connected
+    ? `<span class="status-dot ok">${esc(t("helper.running") + (h.version ? t("helper.version", { v: h.version }) : "") + (h.listener_enabled === false ? t("helper.noListener") : ""))}</span>`
+    : `<span class="status-dot bad">${esc(t("helper.notConnected") + (h.error ? ": " + h.error : ""))}</span>`;
+  if (tv && !h.connected && !$("#adb-guide").dataset.touched) $("#adb-guide").open = true;
+  const a = S.android;
+  if (a && (a.state === "building" || a.state === "installing-jdk" || a.state === "error") && !h.connected) {
+    $("#helper-status").innerHTML += `<p class="muted" style="margin:8px 0 0">${esc(a.state === "error" ? t("android.error", { err: a.error || "" }) : t("android.building"))}</p>`;
+  }
+}
+
+function renderDiag() {
+  const tv = cur(), di = tv?.device_info || {};
+  const st = !tv ? "" : !tv.paired ? t("state.unpaired") : tv.online ? (tv.is_on === false ? t("state.connectedStandby") : t("state.connected")) : t("state.offline");
+  $("#set-tv").innerHTML = tv ? `<h3>${esc(t("set.tv"))}</h3><dl class="facts">
+      <dt>${esc(t("set.name"))}</dt><dd>${esc(tv.name)}</dd>
+      ${di.manufacturer ? `<dt>${esc(t("set.vendor"))}</dt><dd>${esc(di.manufacturer)}</dd>` : ""}
+      ${di.model ? `<dt>${esc(t("set.model"))}</dt><dd>${esc(di.model)}</dd>` : ""}
+      ${di.sw_version ? `<dt>${esc(t("set.system"))}</dt><dd>${esc(di.sw_version)}</dd>` : ""}
+      <dt>${esc(t("set.ip"))}</dt><dd>${esc(tv.host || "–")}</dd>
+      <dt>${esc(t("set.mac"))}</dt><dd>${esc(tv.id)}</dd>
+      <dt>${esc(t("set.state"))}</dt><dd><span class="status-dot ${stClass(tv)}">${esc(st)}</span></dd>
+    </dl>
+    <div class="btn-row" style="margin-bottom:16px"><button class="btn ghost" id="diag-helper">${esc(t("helper.title"))}</button></div>
+    <button class="btn danger" id="remove-tv">${esc(t("set.remove"))}</button>
+    <p class="muted" style="margin:8px 0 0">${esc(t("set.removeNote"))}</p>`
+    : `<h3>${esc(t("set.tv"))}</h3><p class="muted">${esc(t("set.noTv"))}</p>`;
+  $("#diag-helper") && ($("#diag-helper").onclick = () => { $("#diag-dlg").close(); openHelper(); });
+  $("#remove-tv") && ($("#remove-tv").onclick = async () => {
+    if (!confirm(t("set.removeConfirm", { name: tv.name }))) return;
+    try { await api(tvPath(), { method: "DELETE" }); $("#diag-dlg").close(); toast(t("set.removed")); }
+    catch (e) { toast(e.message); }
+  });
+}
+$("#adb-guide").addEventListener("toggle", () => { $("#adb-guide").dataset.touched = "1"; });
+async function loadSettings() {
+  try {
+    const s = await api("/settings");
+    $("#c-public").value = s.public_url; $("#c-local").value = s.local_url; $("#c-local").placeholder = t("conn.auto", { url: s.local_url_auto });
+  } catch {}
+  loadDevices();
+}
+async function loadDevices() {
+  try {
+    const devs = await api("/auth/devices");
+    const locale = { cs: "cs-CZ", en: "en-GB", pt: "pt-PT", zh: "zh-CN" }[LANG] || LANG;
+    $("#dev-list").innerHTML = devs.map(d => `<li><div><span class="name">${esc(d.name)}</span><small>${esc(d.current ? t("dev.this") : t("dev.last", { when: new Date(d.last_seen * 1000).toLocaleString(locale) }))}</small></div>
+      ${d.current ? "" : `<button class="btn ghost" data-revoke="${esc(d.id)}">${esc(t("dev.revoke"))}</button>`}</li>`).join("");
+  } catch {}
+}
+$("#dev-list").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-revoke]"); if (!b) return;
+  try { await api(`/auth/devices/${b.dataset.revoke}`, { method: "DELETE" }); loadDevices(); } catch (err) { toast(err.message); }
+});
+$("#add-phone").onclick = async () => {
+  try {
+    const r = await api("/auth/pair", { method: "POST" });
+    const q = $("#qr"); q.classList.remove("hidden");
+    const pairBox = `<div class="qr-step">${r.app ? `<b>${esc(t("dev.step2"))}</b>` : ""}${r.svg}<p class="muted">${esc(t("dev.qr"))}</p></div>`;
+    const appBox = r.app ? `<div class="qr-step"><b>${esc(t("dev.step1"))}</b>${r.app.svg}<p class="muted">${esc(t("dev.step1Text"))}</p><a class="btn ghost" href="${esc(r.app.url)}" download>${esc(t("dev.download"))}</a></div>` : "";
+    const building = !r.app && S.android && (S.android.state === "building" || S.android.state === "installing-jdk");
+    q.innerHTML = `<div class="qr-steps">${appBox}${pairBox}</div>` + (building ? `<p class="muted android-wait" style="text-align:center;margin:12px 0 0">${esc(t("android.building"))}</p>` : "");
+    clearTimeout(q._t); q._t = setTimeout(() => { q.classList.add("hidden"); loadDevices(); }, r.expires_in * 1000);
+  } catch (e) { toast(e.message); }
+};
+$("#logout").onclick = async () => {
+  try { await api("/auth/logout", { method: "POST" }); } catch {}
+  S.token = null; store.set("hm.token", null); showAuth();
+};
+$("#conn-form").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("#conn-err").textContent = "";
+  try { await api("/settings", { method: "PUT", body: { public_url: $("#c-public").value, local_url: $("#c-local").value } }); toast(t("conn.saved")); }
+  catch (err) { $("#conn-err").textContent = err.message; }
+});
+async function loadLogs() {
+  const box = $("#log-box"); delete box.dataset.hint;
+  try {
+    const r = await api(`/logs?q=${encodeURIComponent($("#log-q").value.trim())}`);
+    box.textContent = r.lines.length ? r.lines.join("\n") : t("diag.empty");
+    box.scrollTop = box.scrollHeight;
+  } catch (e) { box.textContent = e.message; }
+}
+$("#log-load").onclick = loadLogs;
+$("#log-q").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); loadLogs(); } });
+/* Schránka: navigator.clipboard funguje jen přes HTTPS / localhost, na http://IP je potřeba starší cesta. */
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) { try { await navigator.clipboard.writeText(text); return true; } catch {} }
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+  ($("dialog[open]") || document.body).appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, text.length);
+  let ok = false; try { ok = document.execCommand("copy"); } catch {}
+  ta.remove();
+  return ok;
+}
+$("#ui-dump").onclick = async () => {
+  const box = $("#log-box"), btn = $("#ui-dump");
+  btn.disabled = true; delete box.dataset.hint; box.textContent = t("diag.uiLoading");
+  try { const r = await api(tvPath("/adb/uidump"), { method: "POST" }); box.textContent = (r.xml || "").replace(/></g, ">\n<") || t("diag.empty"); }
+  catch (err) { box.textContent = err.message; }
+  finally { btn.disabled = false; }
+};
+$("#log-copy").onclick = async () => { toast(await copyText($("#log-box").textContent) ? t("diag.copied") : t("diag.copyFailed")); };
+$("#pw-form").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("#pw-err").textContent = "";
+  try { await api("/auth/password", { method: "PUT", body: { old: $("#pw-old").value, new: $("#pw-new").value } }); e.target.reset(); toast(t("pw.done")); }
+  catch (err) { $("#pw-err").textContent = err.message; }
+});
+
+/* ---- ADB a pomocník ---- */
+function adbBody() {
+  const w = $("#helper-form").mode.value === "wireless";
+  const body = { connect_port: +$("#h-connect").value || 5555 };
+  if (w) { body.pair_port = +$("#h-pport").value || null; body.pair_code = $("#h-pcode").value.trim(); }
+  return body;
+}
+$("#helper-form").addEventListener("change", (e) => {
+  if (e.target.name !== "mode") return;
+  const w = e.target.value === "wireless";
+  document.querySelectorAll("#helper-form .wireless").forEach(el => el.classList.toggle("hidden", !w));
+  $("#h-connect").value = w ? "" : "5555";
+});
+$("#adb-test").onclick = async () => {
+  if (!cur()) return;
+  const btn = $("#adb-test"), res = $("#adb-result");
+  btn.disabled = true; btn.textContent = t("adb.testing"); res.innerHTML = ""; $("#helper-err").textContent = "";
+  try {
+    const r = await api(tvPath("/adb/test"), { method: "POST", body: adbBody() });
+    res.innerHTML = `<span class="status-dot ok">${esc(t("adb.ok", { model: r.model, android: r.android }))}</span>`;
+  } catch (err) { $("#helper-err").textContent = err.message; }
+  finally { btn.disabled = false; btn.textContent = t("adb.test"); }
+};
+$("#helper-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!cur()) return;
+  const btn = $("#helper-submit"); btn.disabled = true; btn.textContent = t("helper.installing");
+  $("#helper-err").textContent = ""; $("#helper-log").classList.add("hidden");
+  try {
+    const r = await api(tvPath("/helper/setup"), { method: "POST", body: adbBody() });
+    $("#helper-log").textContent = r.log.join("\n"); $("#helper-log").classList.remove("hidden");
+    toast(r.ok ? t("helper.installed") : t("helper.installedNoReply"));
+  } catch (err) { $("#helper-err").textContent = err.message; }
+  finally { btn.disabled = false; btn.textContent = t("helper.install"); }
+});
+$("#helper-retry").onclick = async () => {
+  if (!cur()) return;
+  try { const r = await api(tvPath("/helper/connect"), { method: "POST" }); toast(r.ok ? t("helper.connected") : t("helper.noReply")); }
+  catch (err) { $("#helper-err").textContent = err.message; }
+};
+$("#add-form").addEventListener("submit", async (e) => {
+  e.preventDefault(); $("#add-err").textContent = "";
+  try { const x = await api("/tvs", { method: "POST", body: { host: $("#add-host").value.trim() } }); S.tvs.set(x.id, x); S.sel = x.id; store.set("hm.tv", x.id); toast(t("add.done", { name: x.name })); $("#add-dlg").close(); render(); }
+  catch (err) { $("#add-err").textContent = err.message; }
+});
+
+/* ================= start ================= */
+async function start() {
+  if (!S.token) { showAuth(); return; }
+  try { (await api("/tvs")).forEach(x => S.tvs.set(x.id, x)); }
+  catch (e) { if (e.message !== "unauthorized") toast(e.message); return; }
+  $("#auth").classList.add("hidden"); $("#app").classList.remove("hidden");
+  render(); renderLive(); connectWS();
+}
+loadLang(LANG).then(ok => { if (!ok) LANG = "en"; applyI18n(); loadVersion(); start(); });
+</script>
+</body>
+</html>

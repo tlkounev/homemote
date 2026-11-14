@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+data/
+backend/data/
+backend/apk-dist/*
+!backend/apk-dist/.gitkeep
+backend/android/*/build/
+backend/android/*/keystore/
+backend/android/tools/
+.apk-tools/
+*.jks
+*.keystore
