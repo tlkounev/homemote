@@ -55,6 +55,33 @@ networks:
 
 With `macvlan` the Docker host itself cannot reach the container unless you add a macvlan interface on the host too; other devices in the LAN can.
 
+### Automatic updates (optional)
+
+The backend does not update itself (that would need access to the Docker socket from a container that is reachable from the internet). For hands-off updates run [Watchtower](https://github.com/nicholas-fedor/watchtower) (the maintained fork; the original `containrrr/watchtower` was archived in December 2025) next to it, limited to containers that opt in with a label:
+
+```yaml
+services:
+  homemote-backend:
+    image: ghcr.io/tlkounev/homemote-backend:latest
+    # … rest as in docker-compose.yml
+    labels:
+      - com.centurylinklabs.watchtower.enable=true   # only this container is updated
+
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"     # ignore containers without the label above
+      WATCHTOWER_SCHEDULE: "0 17 4 * * *" # daily at 04:17 (6 fields, seconds first)
+      WATCHTOWER_CLEANUP: "true"          # remove the old image after an update
+      TZ: Europe/Prague                   # time zone for the schedule
+```
+
+Watchtower pulls a newer `latest` image and recreates the container with the same settings; the `data` folder stays. Note that Watchtower itself has full access to Docker through the socket. If your Docker host manages containers through its own UI (some NAS systems), check how it copes with containers recreated outside of it.
+
 ## First steps
 
 1. The backend finds powered-on TVs by itself; the **+** button in the header starts blinking. Add the TV, press **Pair** and enter the code shown on the TV. TVs can also be added by IP.
