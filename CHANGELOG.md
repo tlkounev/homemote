@@ -4,6 +4,10 @@ Projekt se od 0.9.0 jmenuje **Homemote for Google TV**, backend **homemote-backe
 
 Verze backendu je v `backend/app/version.py`. Zobrazuje se ve webu dole pod deskou a vrací ji `/api/health`.
 
+## 1.0.8 – 2026-11-14
+- README přepsané jako návod krok za krokem se snímky obrazovky a přímými odkazy na stažení aplikace pro telefon a pomocníka (vždy nejnovější Release). Vývojářské informace jsou v `docs/development.md`.
+- Pole pro párovací kód je dost široké pro všech šest znaků (první znak se někdy nevešel).
+
 ## 1.0.7 – 2026-11-14
 - Verze backendu je v záhlaví vedle názvu (dřív v patičce): **zelená** = aktuální, **červená** = na GitHubu je novější verze (odkaz na její Release), šedá = zatím neověřeno.
 - Backend každých 6 hodin anonymně zjistí poslední Release na GitHubu (`GET /api/update`, WS událost `update`). Vypnutí: `HM_UPDATE_CHECK=0`; fork: `HM_UPDATE_REPO=vlastník/název`.
