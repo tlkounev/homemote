@@ -121,7 +121,7 @@ The version is shown next to the title: **green** = up to date, **red** = a new 
 docker compose pull && docker compose up -d
 ```
 
-Your settings, TVs and signed-in phones stay. Homemote checks GitHub for a new version every 6 hours (anonymously, turn it off with `HM_UPDATE_CHECK=0`).
+Your settings, TVs and signed-in phones stay. Homemote checks GitHub for a new version every hour, or right away when you click the version (anonymously, turn it off with `HM_UPDATE_CHECK=0`).
 
 The **phone app** and the **helper on the TV** then update from your Homemote: the app shows an *Update / Later* bar at the top (the first time Android asks you to allow Homemote to install apps), and the helper is updated automatically once the debugging connection from step 5 has been set up.
 

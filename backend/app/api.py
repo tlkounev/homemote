@@ -164,6 +164,13 @@ async def update_status(request: web.Request) -> web.Response:
     return web.json_response(rt.updates.status() if rt.updates else {"current": VERSION, "enabled": False})
 
 
+async def update_check(request: web.Request) -> web.Response:
+    rt = request.app[RT]
+    if not rt.updates or not rt.updates.enabled:
+        return web.json_response({"current": VERSION, "enabled": False})
+    return web.json_response(await rt.updates.check_now())
+
+
 async def android_status(request: web.Request) -> web.Response:
     rt = request.app[RT]
     return web.json_response(rt.android.status() if rt.android else {"state": "unavailable", "apps": {}})
@@ -468,6 +475,7 @@ def build_app(rt: Runtime) -> web.Application:
             web.get("/download/homemote.apk", download_phone_apk),
             web.get("/api/android", android_status),
             web.get("/api/update", update_status),
+            web.post("/api/update/check", update_check),
             web.static("/icons", STATIC_DIR / "icons"),
             web.static("/i18n", STATIC_DIR / "i18n"),
             web.get("/api/health", health),

@@ -47,7 +47,8 @@ Router tak nemusí umět NAT loopback.
 |---|---|---|---|
 | GET | `/health` | | `{"ok":true,"instance_id":"…","version":"1.0.9","phone_app":{"version":"1.0.2","code":3,"url":"/download/homemote.apk"}}`, bez přihlášení. `phone_app` jen když je APK v image; podle `code` aplikace v telefonu nabídne aktualizaci. |
 | GET | `/endpoints` | | `{"instance_id","local","public"}` |
-| GET | `/update` | | kontrola nové verze: `{"current","latest","update":bool,"url","checked","enabled","error"}` (poslední Release na GitHubu, kontrola každých 6 h) |
+| GET | `/update` | | kontrola nové verze: `{"current","latest","update":bool,"url","checked","enabled","error"}` (poslední Release na GitHubu, kontrola každou hodinu) |
+| POST | `/update/check` | | zkontrolovat GitHub hned (nejvýš jednou za minutu), vrací totéž co `GET /update` |
 | GET | `/android` | | stav sestavení APK: `{"state":"idle|ready|installing-jdk|building|error|unavailable","error","apps":{"helper":{"version","code","built","ready"},"phone":{…}}}` |
 | GET/PUT | `/settings` | `{"public_url","local_url"}` | prázdné `local_url` = automaticky `http://<IP>:<PORT>` |
 | GET | `/tvs` | | seznam TV (objekt `TV`) |

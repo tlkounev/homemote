@@ -76,6 +76,8 @@ header.top h1 .brand-text { display: flex; align-items: baseline; gap: 8px; min-
   color: var(--muted); border: 1px solid currentColor; border-radius: 999px; padding: 1px 7px; white-space: nowrap; align-self: center;
   text-decoration: none; background: none; line-height: 1.5; cursor: default; }
 .ver.ok { color: var(--good); }
+.ver.ok, .ver:not(.new) { cursor: pointer; }
+.ver.checking { opacity: .55; }
 .ver.new { color: var(--bad); cursor: pointer; }
 .ver.new:hover { background: color-mix(in srgb, var(--bad) 14%, transparent); }
 header.top h1 small { font-family: var(--body, inherit); font-size: .78rem; font-weight: 400; color: var(--muted); white-space: nowrap; }
@@ -789,6 +791,7 @@ const I18N = {
     "about": "Homemote, verze backendu {v}",
     "ver.current": "Aktuální verze", "ver.update": "Je dostupná nová verze {v} – klepnutím zobrazíte novinky a postup aktualizace",
     "ver.unknown": "Novou verzi se zatím nepodařilo ověřit", "ver.off": "Kontrola nové verze je vypnutá",
+    "ver.checked": "ověřeno {when}", "ver.clickCheck": "klepnutím ověříte hned",
     "add.found": "Nalezená zařízení",
     "add.none": "V síti zatím není žádné nové zařízení. Zařízení musí být zapnuté a ve stejné síti.",
     "add.byIp": "Zadat IP adresu",
@@ -875,6 +878,7 @@ const I18N = {
     "about": "Homemote, backend version {v}",
     "ver.current": "Up to date", "ver.update": "New version {v} is available – tap to see what's new and how to update",
     "ver.unknown": "Couldn't check for a new version yet", "ver.off": "Checking for new versions is turned off",
+    "ver.checked": "checked {when}", "ver.clickCheck": "tap to check now",
     "add.found": "Found devices",
     "add.none": "No new device on the network yet. It has to be on and in the same network.",
     "add.byIp": "Enter an IP address",
@@ -1676,9 +1680,22 @@ function renderVersion() {
     el.removeAttribute("href");
     if (u?.latest) { el.classList.add("ok"); el.title = t("ver.current"); }
     else el.title = u && u.enabled === false ? t("ver.off") : t("ver.unknown");
+    if (u?.checked) el.title += " · " + t("ver.checked", { when: new Date(u.checked * 1000).toLocaleString(LANG, { dateStyle: "short", timeStyle: "short" }) });
+    if (u?.enabled !== false) el.title += " · " + t("ver.clickCheck");
   }
   el.setAttribute("aria-label", el.title);
 }
+// klepnutí na zelenou / šedou verzi = zkontrolovat GitHub hned
+$("#ver").addEventListener("click", async (e) => {
+  const el = $("#ver");
+  if (el.classList.contains("new")) return;  // červená = odkaz na Release
+  e.preventDefault();
+  if (S.update?.enabled === false || el.classList.contains("checking")) return;
+  el.classList.add("checking");
+  try { S.update = await api("/update/check", { method: "POST" }); renderVersion(); toast(S.update.update ? t("ver.update", { v: S.update.latest }) : S.update.latest ? t("ver.current") : t("ver.unknown")); }
+  catch (err) { toast(err.message); }
+  finally { el.classList.remove("checking"); }
+});
 function sendText(text) {
   if (!cur() || text == null) return;
   if (!wsSend({ text })) api(tvPath("/text"), { method: "POST", body: { text } }).catch(e => toast(e.message));

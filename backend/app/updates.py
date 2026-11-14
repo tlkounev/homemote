@@ -1,4 +1,4 @@
-"""Kontrola nové verze: poslední Release na GitHubu (každých 6 hodin).
+"""Kontrola nové verze: poslední Release na GitHubu (každou hodinu, ve webu i na klepnutí).
 
 Do GitHubu jde jen anonymní dotaz na veřejné API (bez údajů o instalaci).
 Vypnutí: HM_UPDATE_CHECK=0. Jiný repozitář (fork): HM_UPDATE_REPO=vlastník/název.
@@ -17,8 +17,9 @@ import aiohttp
 from .version import VERSION
 
 LOG = logging.getLogger(__name__)
-INTERVAL = 6 * 3600
-RETRY = 30 * 60
+INTERVAL = 3600
+RETRY = 15 * 60
+MIN_MANUAL = 60  # ruční kontrola nejvýš jednou za minutu
 
 
 def parse(v: str | None) -> tuple[int, ...] | None:
@@ -62,6 +63,12 @@ class UpdateChecker:
         while True:
             ok = await self.check()
             await asyncio.sleep(INTERVAL if ok else RETRY)
+
+    async def check_now(self) -> dict[str, Any]:
+        """Kontrola na žádost z webu (klepnutí na verzi); častěji než jednou za minutu se neptá."""
+        if not self.checked or time.time() - self.checked >= MIN_MANUAL:
+            await self.check()
+        return self.status()
 
     async def check(self) -> bool:
         before = (self.latest, self.error)

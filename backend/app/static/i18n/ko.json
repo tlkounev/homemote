@@ -216,7 +216,9 @@
   "ver.unknown": "아직 새 버전을 확인하지 못했습니다",
   "ver.off": "새 버전 확인이 꺼져 있습니다",
   "helper.updating": "도우미 업데이트 중 {from} → {v}…",
-  "helper.updateFailed": "도우미를 {v}(으)로 자동 업데이트하지 못했습니다: {err}. 1시간 후 다시 시도하거나 아래 버튼으로 다시 설치하세요."
+  "helper.updateFailed": "도우미를 {v}(으)로 자동 업데이트하지 못했습니다: {err}. 1시간 후 다시 시도하거나 아래 버튼으로 다시 설치하세요.",
+  "ver.checked": "{when}에 확인함",
+  "ver.clickCheck": "탭하여 지금 확인"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "{0}이(가) 없습니다 – helper.apk를 데이터 폴더에 넣으세요",

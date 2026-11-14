@@ -216,7 +216,9 @@
   "ver.unknown": "Non è ancora stato possibile verificare una nuova versione",
   "ver.off": "Il controllo delle nuove versioni è disattivato",
   "helper.updating": "Aggiornamento dell’helper {from} → {v}…",
-  "helper.updateFailed": "Aggiornamento automatico dell’helper a {v} non riuscito: {err}. Nuovo tentativo tra un’ora, oppure reinstallalo con il pulsante qui sotto."
+  "helper.updateFailed": "Aggiornamento automatico dell’helper a {v} non riuscito: {err}. Nuovo tentativo tra un’ora, oppure reinstallalo con il pulsante qui sotto.",
+  "ver.checked": "verificato {when}",
+  "ver.clickCheck": "tocca per verificare ora"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "manca {0} – metti helper.apk nella cartella dei dati",

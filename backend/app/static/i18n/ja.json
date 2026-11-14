@@ -216,7 +216,9 @@
   "ver.unknown": "新しいバージョンをまだ確認できていません",
   "ver.off": "新しいバージョンの確認はオフです",
   "helper.updating": "ヘルパーを更新中 {from} → {v}…",
-  "helper.updateFailed": "ヘルパーの {v} への自動更新に失敗しました：{err}。1 時間後に再試行します。下のボタンで再インストールすることもできます。"
+  "helper.updateFailed": "ヘルパーの {v} への自動更新に失敗しました：{err}。1 時間後に再試行します。下のボタンで再インストールすることもできます。",
+  "ver.checked": "{when} に確認",
+  "ver.clickCheck": "タップして今すぐ確認"
  },
  "errors": {
   "missing {0} – put helper.apk into the data folder": "{0} がありません – helper.apk をデータフォルダーに置いてください",
